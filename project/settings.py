@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 
     # installed apps
     'users',
+    'reports',
 
     # external installed apps
     'rest_framework',
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "phonenumber_field",
     "debug_toolbar",
+    'fcm_django',
 ]
 
 REST_FRAMEWORK = {
