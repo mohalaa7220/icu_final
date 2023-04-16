@@ -1,12 +1,11 @@
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
-from rest_framework import generics, status
+from rest_framework import generics, status, views
 from .models import Medicines, Medicine
 from rest_framework.permissions import IsAuthenticated
 from .serializer import (MedicinesSerializer, AddMedicineSerializer, NurseResultMedicineSerializer,
                          AddAllNursesMedicineSerializer, ResultMedicineSerializer, SimpleResultMedicineSerializer)
 from users.models import Nurse, Patient
-from users.permissions import IsDoctor
+from users.permissions import IsDoctor, IsNurse
 from django.shortcuts import get_object_or_404
 
 
@@ -27,7 +26,7 @@ class MedicineDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 # -------  Add Medicine for(patient)
-class AddMedicineNurse(generics.ListCreateAPIView):
+class AddMedicineNurse(views.APIView):
     permission_classes = [IsAuthenticated, IsDoctor]
     serializer_class = AddMedicineSerializer
 
@@ -73,32 +72,33 @@ class GetMedicineUser(generics.RetrieveUpdateDestroyAPIView):
 
 # -------  Get Medicines for (Nurse)
 class GetMedicineNurse(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsNurse]
 
     def get(self, request):
         user = request.user
-        nurse = Nurse.objects.get(user_id=user.id)
-        medicine = Medicine.objects.filter(nurse=nurse)
+        nurse = get_object_or_404(
+            Nurse.objects.select_related('user'), user_id=user.id)
+        medicine = Medicine.objects.select_related(
+            'name', 'doctor', 'patient').filter(nurse=nurse)
         serializer = NurseResultMedicineSerializer(medicine, many=True)
         return Response({"medicines": serializer.data}, status=status.HTTP_200_OK)
 
 
 # -------  Add Medicines for all Nurses
-class AddMedicineAllNurses(generics.ListCreateAPIView):
+class AddMedicineAllNurses(views.APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = AddAllNursesMedicineSerializer
 
     def post(self, request):
         data = request.data
         doctor_added = request.user
-        patient = Patient.objects.get(id=data.get('patient'))
+        patient = get_object_or_404(Patient, id=data.get('patient'))
         nurses = patient.nurse.all()
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
             medicine = serializer.save(doctor=doctor_added, nurse=nurses)
             response = {
-                "medicine": ResultMedicineSerializer(medicine, context=self.get_serializer_context()).data,
                 "message": "Medicine saved successfully",
             }
             return Response(data=response, status=status.HTTP_201_CREATED)

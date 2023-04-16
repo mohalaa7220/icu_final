@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/', include('users.urls')),
     path('api/report/', include('reports.urls')),
     path('api/notifications/', include('notification.urls')),
+    path('api/rays/', include('rays.urls')),
     path('api/medicine/', include('medicine.urls')),
     path('__debug__/', include('debug_toolbar.urls')),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),

@@ -13,7 +13,7 @@ class MedicinesSerializer(serializers.ModelSerializer):
 # Add to Nurse
 class AddMedicineSerializer(serializers.ModelSerializer):
     nurse = serializers.SlugRelatedField(
-        slug_field="user_id", queryset=Nurse.objects.all(), many=True)
+        slug_field="user_id", queryset=Nurse.objects.select_related('user'), many=True)
 
     class Meta:
         model = Medicine
