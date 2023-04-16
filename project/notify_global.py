@@ -2,12 +2,7 @@ from firebase_admin import messaging, firestore
 from fcm_django.models import FCMDevice
 from django.utils import timezone
 
-# Notification.objects.create(
-#                 patient=patient,
-#                 title=title,
-#                 message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
-#                 sent_at=timezone.now(),
-#             )
+from notification.models import NotificationApp
 
 
 def send_notification(patient, title=''):
@@ -23,6 +18,12 @@ def send_notification(patient, title=''):
     response = messaging.send_multicast(message)
     for i, result in enumerate(response.responses):
         if result.success:
+            NotificationApp.objects.create(
+                patient=patient,
+                title=title,
+                message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
+            )
+
             print(f'Message sent to device {i}')
         else:
             device = devices[i]

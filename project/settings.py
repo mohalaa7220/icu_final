@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     # installed apps
     'users',
     'reports',
+    'notification',
+    'medicine',
+    'rays',
 
     # external installed apps
     'rest_framework',
