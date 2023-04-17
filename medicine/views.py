@@ -4,9 +4,12 @@ from .models import Medicines, Medicine
 from rest_framework.permissions import IsAuthenticated
 from .serializer import (MedicinesSerializer, AddMedicineSerializer, NurseResultMedicineSerializer,
                          AddAllNursesMedicineSerializer, ResultMedicineSerializer, SimpleResultMedicineSerializer)
-from users.models import Nurse, Patient
+from users.models import Nurse, Patient, User
 from users.permissions import IsDoctor, IsNurse
 from django.shortcuts import get_object_or_404
+from project.notify_global import send_notification
+from fcm_django.models import FCMDevice
+from project.serializer_error import serializer_error
 
 
 # ------- Name of Medicines
@@ -32,20 +35,24 @@ class AddMedicineNurse(views.APIView):
 
     def post(self, request):
         data = request.data
+        patient = get_object_or_404(Patient, id=data.get('patient'))
+        nurse_ids = data.get('nurse')
+        nurse_devices = {}
+        for nurse_id in nurse_ids:
+            nurse = User.objects.get(id=nurse_id)
+            devices = FCMDevice.objects.filter(user=nurse)
+            for device in devices:
+                nurse_devices[device.registration_id] = nurse
         doctor_added = request.user
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
             serializer.save(doctor=doctor_added)
-            response = {
-                "message": "Medicine saved successfully",
-            }
-            return Response(data=response, status=status.HTTP_201_CREATED)
+            for device_token, nurse in nurse_devices.items():
+                send_notification(patient, nurse, device_token, 'Medicine')
+            return Response(data={"message": "Medicine saved successfully"}, status=status.HTTP_201_CREATED)
         else:
-            new_error = {}
-            for field_name, field_errors in serializer.errors.items():
-                new_error[field_name] = field_errors[0]
-            return Response(new_error, status=status.HTTP_400_BAD_REQUEST)
+            return serializer_error(serializer)
 
 
 # ------- Get Medicine for Doctor
@@ -97,13 +104,18 @@ class AddMedicineAllNurses(views.APIView):
         doctor_added = request.user
         patient = get_object_or_404(Patient, id=data.get('patient'))
         nurses = patient.nurse.all()
+        nurse_devices = {}
+        for nurse_id in nurses:
+            devices = FCMDevice.objects.filter(user=nurse_id.user_id)
+            for device in devices:
+                nurse_devices[device.registration_id] = nurse_id.user_id
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
             serializer.save(doctor=doctor_added, nurse=nurses)
-            response = {
-                "message": "Medicine Added successfully",
-            }
-            return Response(data=response, status=status.HTTP_201_CREATED)
+            for device_token, nurse_id.user_id in nurse_devices.items():
+                send_notification(
+                    patient, nurse_id.user_id, device_token, 'Medicines Added')
+            return Response(data={"message": "Medicine Added successfully"}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors)
+            return serializer_error(serializer)

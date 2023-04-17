@@ -16,8 +16,7 @@ from django.db.models import Prefetch
 from project.notify_global import send_notification
 from django.shortcuts import get_object_or_404
 from fcm_django.models import FCMDevice
-
-
+from project.serializer_error import serializer_error
 
 
 # ======================= Doctor =======================================
@@ -35,15 +34,16 @@ class AddDoctorReport(generics.ListCreateAPIView):
             devices = FCMDevice.objects.filter(user=nurse)
             for device in devices:
                 nurse_devices[device.registration_id] = nurse
-        doctor = Doctor.objects.select_related('user').get(user=self.request.user)
+        doctor = Doctor.objects.select_related(
+            'user').get(user=self.request.user)
         serializer = DoctorReportSerializer(data=data)
         if serializer.is_valid():
             for device_token, nurse in nurse_devices.items():
-                send_notification(patient, nurse, device_token, 'Report Added ')
+                send_notification(patient, nurse, device_token, 'Report Added')
             serializer.save(added_by=doctor)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors)        
+            return serializer_error(serializer)
 
     def get(self, request):
         doctor = Doctor.objects.select_related('user').get(user=request.user)
@@ -115,19 +115,26 @@ class AddNurseReport(generics.ListCreateAPIView):
 
     def post(self, serializer):
         data = self.request.data
+        patient = get_object_or_404(Patient, id=data.get('patient'))
+        doctor_ids = data.get('doctor')
+        doctor_devices = {}
+        for doctor_id in doctor_ids:
+            doctor = User.objects.get(id=doctor_id)
+            devices = FCMDevice.objects.filter(user=doctor)
+            for device in devices:
+                doctor_devices[device.registration_id] = doctor
         nurse = Nurse.objects.select_related(
             'user').get(user=self.request.user)
         serializer = NurseReportSerializer(data=data)
 
         if serializer.is_valid(raise_exception=True):
             serializer.save(added_by=nurse)
-            response = {
-                "message": "Report Created successfully",
-            }
-
-            return Response(data=response, status=status.HTTP_201_CREATED)
+            for device_token, doctor in doctor_devices.items():
+                send_notification(
+                    patient, doctor, device_token, 'Report Added')
+            return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors)
+            return serializer_error(serializer)
 
     def get(self, request):
         current_nurse = Nurse.objects.select_related(
@@ -341,21 +348,23 @@ class AddDoctorReportForAllNurse(generics.ListCreateAPIView):
     def post(self, serializer, pk=None):
         data = self.request.data
         doctor = Doctor.objects.get(user=self.request.user)
-        patient = Patient.objects.get(id=data.get('patient'))
+        patient = get_object_or_404(Patient, id=data.get('patient'))
         nurses = patient.nurse.all()
-
+        nurse_devices = {}
+        for nurse_id in nurses:
+            devices = FCMDevice.objects.filter(user=nurse_id.user_id)
+            for device in devices:
+                nurse_devices[device.registration_id] = nurse_id.user_id
         serializer = self.serializer_class(data=data)
 
-        if serializer.is_valid(raise_exception=True):
-            result = serializer.save(added_by=doctor, nurse=nurses)
-            response = {
-                "report": ResultDoctorReportSerializer(result, context=self.get_serializer_context()).data,
-                "message": "Report Created successfully",
-            }
-
-            return Response(data=response, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            serializer.save(added_by=doctor, nurse=nurses)
+            for device_token, nurse_id.user_id in nurse_devices.items():
+                send_notification(
+                    patient, nurse_id.user_id, device_token, 'Report Added')
+            return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
-            return Response(data={serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return serializer_error(serializer)
 
 
 # ========== AddNurseReportForAllDoctors ===========
@@ -371,11 +380,8 @@ class AddNurseReportForAllDoctors(generics.ListCreateAPIView):
 
         serializer = self.serializer_class(data=data)
 
-        if serializer.is_valid(raise_exception=True):
-            result = serializer.save(added_by=nurse, doctor=doctors)
-            response = {
-                "report": ResultNurseReportSerializer(result, context=self.get_serializer_context()).data,
-                "message": "Report Created successfully",
-            }
-
-        return Response(data=response, status=status.HTTP_201_CREATED)
+        if serializer.is_valid():
+            serializer.save(added_by=nurse, doctor=doctors)
+            return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
+        else:
+            return serializer_error(serializer)
