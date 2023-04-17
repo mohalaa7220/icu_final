@@ -1,6 +1,6 @@
 from rest_framework import generics, status
+from fcm_django.models import FCMDevice
 from django.db.models import Q
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from .email_send import send_via_email, send_otp_via_email
@@ -146,6 +146,10 @@ class Login(ObtainAuthToken):
         if email.exists() and email.get().is_active == True:
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data['user']
+            # Retrieve device token from request data
+            device_token = request.data.get("device_token")
+            FCMDevice.objects.get_or_create(
+                registration_id=device_token, user=user)
             token, create = Token.objects.get_or_create(user=user)
             response = {
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
