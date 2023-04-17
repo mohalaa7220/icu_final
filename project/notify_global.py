@@ -5,10 +5,11 @@ from django.utils import timezone
 from notification.models import NotificationApp
 
 
-def send_notification(patient, title=''):
+def send_notification(patient, user, device_token, title=''):
     # Get the registered FCMDevice tokens
-    devices = FCMDevice.objects.all()
+    devices = FCMDevice.objects.filter(user=user, registration_id=device_token)
     registration_ids = [device.registration_id for device in devices]
+
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
             title=title, body=f"{title} for Patient ({patient.name}) in room number {patient.room_number}"),

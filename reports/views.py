@@ -10,10 +10,14 @@ from .serializer import (
     DoctorReportSerializer, ReportDoctorPatientSerializer,
     ResultDoctorReportSerializer, NurseReportSerializer, ResultNurseReportSerializer)
 from rest_framework.permissions import IsAuthenticated
-from users.models import (Nurse, Patient, Doctor)
+from users.models import (Nurse, Patient, Doctor, User)
 from users.permissions import IsDoctor, IsNurse
 from django.db.models import Prefetch
 from project.notify_global import send_notification
+from django.shortcuts import get_object_or_404
+from fcm_django.models import FCMDevice
+
+
 
 
 # ======================= Doctor =======================================
@@ -23,18 +27,23 @@ class AddDoctorReport(generics.ListCreateAPIView):
 
     def post(self, serializer):
         data = self.request.data
-        patient = Patient.objects.get(id=data.get('patient'))
-
-        doctor = Doctor.objects.select_related(
-            'user').get(user=self.request.user)
+        patient = get_object_or_404(Patient, id=data.get('patient'))
+        nurse_ids = data.get('nurse')
+        nurse_devices = {}
+        for nurse_id in nurse_ids:
+            nurse = User.objects.get(id=nurse_id)
+            devices = FCMDevice.objects.filter(user=nurse)
+            for device in devices:
+                nurse_devices[device.registration_id] = nurse
+        doctor = Doctor.objects.select_related('user').get(user=self.request.user)
         serializer = DoctorReportSerializer(data=data)
-
         if serializer.is_valid():
-            send_notification(patient, 'Report Added ')
+            for device_token, nurse in nurse_devices.items():
+                send_notification(patient, nurse, device_token, 'Report Added ')
             serializer.save(added_by=doctor)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors)
+            return Response(serializer.errors)        
 
     def get(self, request):
         doctor = Doctor.objects.select_related('user').get(user=request.user)
