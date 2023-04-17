@@ -6,7 +6,7 @@ import uuid
 class Medicines(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=250)
+    name = models.CharField(max_length=250, unique=True)
     created = models.DateTimeField(auto_now_add=True, null=True)
     updated = models.DateTimeField(auto_now=True, null=True)
 

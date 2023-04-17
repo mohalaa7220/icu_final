@@ -9,6 +9,13 @@ class MedicinesSerializer(serializers.ModelSerializer):
         model = Medicines
         fields = ['id', 'name', 'created', 'updated']
 
+    def validate(self, attrs):
+        name = Medicines.objects.filter(name=attrs.get('name')).exists()
+        if not name:
+            raise serializers.ValidationError(
+                {'message': 'This name already exists'})
+        return attrs
+
 
 # Add to Nurse
 class AddMedicineSerializer(serializers.ModelSerializer):
@@ -18,6 +25,17 @@ class AddMedicineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Medicine
         fields = '__all__'
+
+    def validate(self, attrs):
+        name = attrs.get('name')
+        patient = attrs.get('patient')
+        if not name:
+            raise serializers.ValidationError(
+                {'message': 'This field name is required.'})
+        if not patient:
+            raise serializers.ValidationError(
+                {'message': 'This field patient is required.'})
+        return attrs
 
 
 class ResultMedicineSerializer(serializers.ModelSerializer):

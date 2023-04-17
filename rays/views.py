@@ -2,10 +2,11 @@ from rest_framework import generics, views
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Rays, Doctor, Nurse, Patient
-from .serializer import (DoctorRaysSerializer, ResultDoctorRaysSerializer)
+from .serializer import (
+    DoctorRaysSerializer, ResultDoctorRaysSerializer, ResultPatientRaysSerializer)
 from rest_framework.permissions import IsAuthenticated
-from users.models import User
-from users.permissions import IsDoctor, IsNurse
+from users.permissions import IsDoctor
+from django.shortcuts import get_object_or_404
 
 
 # ====================== Doctor =======================================
@@ -40,9 +41,9 @@ class AddDoctorRays(generics.ListCreateAPIView):
 
 
 # ====================== Nurse =======================================
-class PatientRays(generics.ListCreateAPIView):
+class PatientRays(views.APIView):
     def get(self, request, pk=None):
-        patient = Patient.objects.get(pk=pk)
-        rays = patient.patient_rays.all()
-        print(rays)
-        return Response({''}, status=status.HTTP_200_OK)
+        patient = get_object_or_404(Patient.objects, pk=pk)
+        rays = patient.patient_rays.prefetch_related('doctor', 'nurse')
+        serializer = ResultPatientRaysSerializer(rays, many=True).data
+        return Response({'data': serializer}, status=status.HTTP_200_OK)

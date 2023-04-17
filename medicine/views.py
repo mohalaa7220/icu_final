@@ -42,7 +42,10 @@ class AddMedicineNurse(views.APIView):
             }
             return Response(data=response, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors)
+            new_error = {}
+            for field_name, field_errors in serializer.errors.items():
+                new_error[field_name] = field_errors[0]
+            return Response(new_error, status=status.HTTP_400_BAD_REQUEST)
 
 
 # ------- Get Medicine for Doctor
@@ -86,7 +89,7 @@ class GetMedicineNurse(generics.ListAPIView):
 
 # -------  Add Medicines for all Nurses
 class AddMedicineAllNurses(views.APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsDoctor]
     serializer_class = AddAllNursesMedicineSerializer
 
     def post(self, request):
@@ -97,9 +100,9 @@ class AddMedicineAllNurses(views.APIView):
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
-            medicine = serializer.save(doctor=doctor_added, nurse=nurses)
+            serializer.save(doctor=doctor_added, nurse=nurses)
             response = {
-                "message": "Medicine saved successfully",
+                "message": "Medicine Added successfully",
             }
             return Response(data=response, status=status.HTTP_201_CREATED)
         else:
