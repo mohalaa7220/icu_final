@@ -43,7 +43,8 @@ class AddDoctorRays(generics.ListCreateAPIView):
 # ====================== Nurse =======================================
 class PatientRays(views.APIView):
     def get(self, request, pk=None):
-        patient = get_object_or_404(Patient.objects, pk=pk)
-        rays = patient.patient_rays.prefetch_related('doctor', 'nurse')
+        patient = get_object_or_404(Patient, pk=pk)
+        rays = patient.patient_rays.prefetch_related(
+            'nurse__user', 'doctor__user').all()
         serializer = ResultPatientRaysSerializer(rays, many=True).data
         return Response({'data': serializer}, status=status.HTTP_200_OK)

@@ -4,7 +4,8 @@ from .models import NotificationApp
 
 class NotificationSerializer(serializers.ModelSerializer):
     user_sender = serializers.StringRelatedField()
+    patient = serializers.StringRelatedField()
 
     class Meta:
         model = NotificationApp
-        fields = '__all__'
+        exclude = ('user_receiver',)

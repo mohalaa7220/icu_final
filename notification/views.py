@@ -1,14 +1,19 @@
 from rest_framework.response import Response
-from rest_framework import generics, status, views
+from rest_framework import status, views
+from rest_framework.permissions import IsAuthenticated
 from .serializer import NotificationSerializer
 from .models import NotificationApp
 
 
 # AllNotifications
-class AllNotifications(generics.ListCreateAPIView):
-    serializer_class = NotificationSerializer
-    queryset = NotificationApp.objects.select_related(
-        'user_sender', 'patient').all()
+class AllNotifications(views.APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        queryset = NotificationApp.objects.select_related(
+            'user_sender', 'patient').filter(user_receiver=request.user)
+        serializer_class = NotificationSerializer(queryset, many=True).data
+        return Response({"data": serializer_class}, status=status.HTTP_200_OK)
 
 
 # ReadNotifications
@@ -19,7 +24,7 @@ class ReadNotifications(views.APIView):
         notification = NotificationApp.objects.select_related(
             'user_sender', 'patient').filter(status=False)
         serializer = self.serializer_class(notification, many=True).data
-        return Response(data=serializer, status=status.HTTP_200_OK)
+        return Response(data={"data": serializer}, status=status.HTTP_200_OK)
 
 
 # Make ReadNotifications

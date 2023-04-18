@@ -7,6 +7,8 @@ from users.models import User, Patient
 class NotificationApp(models.Model):
     user_sender = models.ForeignKey(
         User, null=True, blank=True, related_name='user_sender', on_delete=models.CASCADE)
+    user_receiver = models.ForeignKey(
+        User, null=True, blank=True, related_name='user_receiver', on_delete=models.CASCADE)
     patient = models.ForeignKey(
         Patient, null=True, blank=True, related_name='patient', on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
@@ -16,4 +18,4 @@ class NotificationApp(models.Model):
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.message
+        return self.title
