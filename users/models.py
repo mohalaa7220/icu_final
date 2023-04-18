@@ -122,7 +122,7 @@ class Doctor(models.Model):
         Nurse, related_name='doctor_nurse')
 
     def __str__(self):
-        return self.user.username
+        return self.user.name
 
 
 # Patient

@@ -1,14 +1,11 @@
 from rest_framework import generics, views
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import DoctorReport, NurseReport
-from .serializer import (
-    ReportNursePatientSerializer, DoctorReportAllNursesSerializer, ResultNurseReportAddedDoctorSerializer,
-    ResultDoctorReportAddedNurseSerializer, NurseReportAllDoctorsSerializer,
-    DoctorReportSerializer, ReportDoctorPatientSerializer,
-    ResultDoctorReportSerializer, NurseReportSerializer, ResultNurseReportSerializer)
+from .serializer import (DoctorReportAllNursesSerializer, ResultNurseReportAddedDoctorSerializer,
+                         ResultDoctorReportAddedNurseSerializer, NurseReportAllDoctorsSerializer,
+                         DoctorReportSerializer, ResultDoctorReportSerializer, NurseReportSerializer, ResultNurseReportSerializer)
 from rest_framework.permissions import IsAuthenticated
 from users.models import (Nurse, Patient, Doctor, User)
 from users.permissions import IsDoctor, IsNurse
@@ -105,7 +102,7 @@ class GetDoctorReport(views.APIView):
 
             serializer = ResultDoctorReportAddedNurseSerializer(
                 report, many=True)
-            return Response({'result': len(serializer.data), "reports": serializer.data}, status=status.HTTP_200_OK)
+            return Response({'result': len(serializer.data), "data": serializer.data}, status=status.HTTP_200_OK)
 
 
 # ======================= Nurse =======================================
@@ -144,7 +141,7 @@ class AddNurseReport(generics.ListCreateAPIView):
         )
         serializer = self.serializer_class(report, many=True)
 
-        return Response({"result": report.count(), 'reports': serializer.data})
+        return Response({"result": report.count(), 'data': serializer.data})
 
 
 class NurseDetailsReport(generics.RetrieveUpdateDestroyAPIView):
@@ -184,160 +181,63 @@ class GetNurseReport(views.APIView):
     permission_classes = [IsAuthenticated, IsNurse]
 
     def get(self, request, id=None):
-        try:
-            user = request.user
-            if id:
-                report = DoctorReport.objects.get(id=id)
-                serializer = ResultNurseReportAddedDoctorSerializer(report)
-                return Response({"report": serializer.data}, status=status.HTTP_200_OK)
+        user = request.user
+        if id:
+            report = get_object_or_404(DoctorReport.objects.select_related(
+                'patient', 'added_by').prefetch_related('nurse'), id=id)
+            serializer = ResultNurseReportAddedDoctorSerializer(report)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-            else:
-                current_nurse = Nurse.objects.get(user_id=user)
-                report = current_nurse.nurse_reports.all()
-
-                serializer = ResultNurseReportAddedDoctorSerializer(
-                    report, many=True)
-                return Response({'result': len(serializer.data), "reports": serializer.data}, status=status.HTTP_200_OK)
-        except ObjectDoesNotExist:
-            return Response({"message": "Report does not exist"}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            current_nurse = Nurse.objects.select_related(
+                'user').get(user_id=user)
+            report = current_nurse.nurse_reports.select_related(
+                'patient', 'added_by').all()
+            serializer = ResultNurseReportAddedDoctorSerializer(
+                report, many=True)
+            return Response({'result': len(serializer.data), "reports": serializer.data}, status=status.HTTP_200_OK)
 
 
 # ======================= Return & Add Report For patient =======================================
-class DoctorPatientReport(generics.ListCreateAPIView):
+class DoctorPatientReport(views.APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ReportDoctorPatientSerializer
-
-    def post(self, serializer, pk=None):
-        data = self.request.data
-        doctor = Doctor.objects.get(user=self.request.user)
-        serializer = self.serializer_class(data=data)
-
-        if data['patient'] == pk:
-            if serializer.is_valid(raise_exception=True):
-                result = serializer.save(added_by=doctor)
-                response = {
-                    "report": ResultDoctorReportSerializer(result, context=self.get_serializer_context()).data,
-                    "message": "Report Created successfully",
-                }
-
-                return Response(data=response, status=status.HTTP_201_CREATED)
-            else:
-                return Response(serializer.errors)
-        else:
-            return Response({'ID of patient not equal in the body'}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, pk=None):
-        doctor = Doctor.objects.get(user=self.request.user)
-        patient = Patient.objects.get(pk=pk)
-        reports = patient.patient_reports.filter(added_by=doctor)
+        patient = get_object_or_404(Patient, pk=pk)
+        reports = patient.patient_reports.prefetch_related('nurse__user').all()
         serializer = ResultDoctorReportSerializer(reports, many=True)
-        return Response({'result': len(serializer.data), "reports": serializer.data}, status=status.HTTP_200_OK)
+        return Response({'result': len(serializer.data), "data": serializer.data}, status=status.HTTP_200_OK)
 
 
-class DoctorPatientReportDetail(generics.RetrieveUpdateDestroyAPIView):
+class DoctorPatientReportDetail(views.APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ReportDoctorPatientSerializer
 
     def get(self, request, pk=None, id=None):
-        report = DoctorReport.objects.get(id=id)
+        report = get_object_or_404(
+            DoctorReport.objects.prefetch_related("nurse__user"), id=id)
         serializer = ResultDoctorReportSerializer(report)
-        return Response({"report": serializer.data}, status=status.HTTP_200_OK)
-
-    def put(self, request,  pk=None, id=None):
-        report = DoctorReport.objects.get(id=id)
-        patient = Patient.objects.get(id=pk)
-
-        data = request.data
-        data['patient'] = patient.id
-
-        serializer = self.serializer_class(
-            instance=report, data=data,)
-
-        if serializer.is_valid(raise_exception=True):
-            result = serializer.save()
-            response = {
-                "message": "Report Updated successfully",
-                "data": ResultDoctorReportSerializer(result).data,
-            }
-            return Response(data=response, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors)
-
-    def delete(self, request, id=None, pk=None):
-        report = DoctorReport.objects.get(id=id)
-        report.delete()
-        return Response({"reports": 'Report Deleted Successfully'}, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class NursePatientReport(generics.ListCreateAPIView):
+class NursePatientReport(views.APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ReportNursePatientSerializer
-
-    def post(self, serializer, pk=None):
-        data = self.request.data
-        nurse = Nurse.objects.get(user=self.request.user)
-        serializer = self.serializer_class(data=data)
-
-        if data['patient'] == pk:
-            if serializer.is_valid(raise_exception=True):
-                result = serializer.save(added_by=nurse)
-                response = {
-                    "report": ResultNurseReportSerializer(result, context=self.get_serializer_context()).data,
-                    "message": "Report Created successfully",
-                }
-
-                return Response(data=response, status=status.HTTP_201_CREATED)
-            else:
-                return Response(serializer.errors, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        else:
-            return Response({'ID of patient not equal in the body'}, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, pk=None):
-        nurse = Nurse.objects.get(user=self.request.user)
-        patient = Patient.objects.get(pk=pk)
-        reports = patient.patients_reports.filter(added_by=nurse)
+        patient = get_object_or_404(Patient, pk=pk)
+        reports = patient.patients_reports.prefetch_related(
+            'doctor__user').all()
         serializer = ResultNurseReportSerializer(reports, many=True)
-        return Response({'result': len(serializer.data), "reports": serializer.data}, status=status.HTTP_200_OK)
+        return Response({'result': len(serializer.data), "data": serializer.data}, status=status.HTTP_200_OK)
 
 
-class NursePatientReportDetail(generics.RetrieveUpdateDestroyAPIView):
+class NursePatientReportDetail(views.APIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = ReportNursePatientSerializer
 
     def get(self, request, pk=None, id=None):
-        try:
-            report = NurseReport.objects.get(id=id)
-            serializer = ResultNurseReportSerializer(report)
-            return Response({"report": serializer.data}, status=status.HTTP_200_OK)
-        except ObjectDoesNotExist:
-            return Response({"message": "Report does not exist"}, status=status.HTTP_400_BAD_REQUEST)
-
-    def put(self, request,  pk=None, id=None):
-        try:
-            report = NurseReport.objects.get(id=id)
-            patient = Patient.objects.get(id=pk)
-
-            data = request.data
-            data['patient'] = patient.id
-
-            serializer = self.serializer_class(
-                instance=report, data=data,)
-
-            serializer.is_valid(raise_exception=True)
-            result = serializer.save()
-            response = {
-                "message": "Report Updated successfully",
-                "data": ResultNurseReportSerializer(result).data,
-            }
-            return Response(data=response, status=status.HTTP_200_OK)
-        except ObjectDoesNotExist:
-            return Response({"message": "Report does not exist"}, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, id=None, pk=None):
-        report = DoctorReport.objects.get(id=id)
-        report.delete()
-        return Response({"reports": 'Report Deleted Successfully'}, status=status.HTTP_200_OK)
+        report = report = get_object_or_404(
+            NurseReport.objects.prefetch_related("doctor__user"), id=id)
+        serializer = ResultNurseReportSerializer(report)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # ========== AddDoctorReportForAllNurse ===========
@@ -374,14 +274,23 @@ class AddNurseReportForAllDoctors(generics.ListCreateAPIView):
 
     def post(self, serializer, pk=None):
         data = self.request.data
-        nurse = Nurse.objects.get(user=self.request.user)
-        patient = Patient.objects.get(id=data['patient'])
+        nurse = Nurse.objects.select_related(
+            'user').get(user=self.request.user)
+        patient = get_object_or_404(Patient, id=data.get('patient'))
         doctors = patient.doctor.all()
-
+        doctor_devices = {}
+        for doctor_id in doctors:
+            doctor = User.objects.get(id=doctor_id)
+            devices = FCMDevice.objects.filter(user=doctor)
+            for device in devices:
+                doctor_devices[device.registration_id] = doctor
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
             serializer.save(added_by=nurse, doctor=doctors)
+            for device_token, doctor in doctor_devices.items():
+                send_notification(
+                    patient, doctor, device_token, 'Report Added')
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
