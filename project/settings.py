@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'notification',
     'medicine',
     'rays',
+    'medical_test',
 
     # external installed apps
     'rest_framework',
