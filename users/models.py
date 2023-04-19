@@ -87,7 +87,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ordering = ['-date_joined']
 
     def __str__(self):
-        return self.username
+        return self.name
 
 
 # Admin Class

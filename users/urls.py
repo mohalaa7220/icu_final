@@ -43,10 +43,10 @@ urlpatterns = [
          GetRelatedUser.as_view(), name="get_related_user"),
 
     # Return All Doctors
-    path("doctors/", AllDoctors.as_view(), name="doctors"),
+    path("doctors", AllDoctors.as_view(), name="doctors"),
 
     # Return All Nurses
-    path("nurses/", AllNurses.as_view(), name="nurses"),
+    path("nurses", AllNurses.as_view(), name="nurses"),
 
     # User Details
     path("user/<str:pk>", UserDetails.as_view(), name="user_detail"),

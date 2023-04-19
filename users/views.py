@@ -16,9 +16,8 @@ from .serializer import (SignUpAdminSerializer, SignUpUserSerializer, AddNurseSe
                          AddPatient, PatientSerializer, PatientDoctorsSerializer, PatientNurseSerializer,
                          ResetPasswordSerializer, VerifyOtpSerializer, PasswordSerializer, UpdateProfileSerializer)
 from .models import (Admin, Doctor, Nurse, User, Patient)
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
 from rest_framework.authentication import SessionAuthentication
+from project.serializer_error import serializer_error
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
@@ -142,14 +141,15 @@ class Login(ObtainAuthToken):
         data = request.data
         serializer = self.serializer_class(data=data)
         email = User.objects.filter(email=data.get('username'))
-
+        device_token = request.data.get("device_token")
+        if not device_token:
+            return Response(data={"message": "device_token is required"}, status=status.HTTP_400_BAD_REQUEST)
         if email.exists() and email.get().is_active == True:
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data['user']
             # Retrieve device token from request data
-            device_token = request.data.get("device_token")
-            FCMDevice.objects.get_or_create(
-                registration_id=device_token, user=user)
+            # FCMDevice.objects.get_or_create(
+            #     registration_id=device_token, user=user)
             token, create = Token.objects.get_or_create(user=user)
             response = {
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
@@ -175,12 +175,12 @@ class LoginUser(generics.RetrieveUpdateAPIView):
 
     def get(self, request):
         user_id = request.user.id
-        queryset = User.objects.get(id=user_id)
+        queryset = get_object_or_404(User, id=user_id)
         user_serializer = self.serializer_class(queryset)
         if user_serializer:
             return Response({"data": user_serializer.data}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": user_serializer.errors}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return serializer_error(user_serializer)
 
 
 # ----- Add or Remove Nurse from Doctor
@@ -194,25 +194,26 @@ class AddDeleteNurseUser(generics.RetrieveUpdateDestroyAPIView):
         nurses_ids = data.get('nurse')
         serializer = self.serializer_class(data=data)
 
-        doctor_instance = Doctor.objects.get(user=doctor)
+        doctor_instance = get_object_or_404(
+            Doctor.objects.select_related('user'), user=doctor)
         if serializer.is_valid():
             for nurse_id in nurses_ids:
-                nurse_instance = Nurse.objects.get(user_id=nurse_id)
+                nurse_instance = get_object_or_404(
+                    Nurse.objects.select_related('user'), user_id=nurse_id)
                 doctor_instance.nurse.add(nurse_instance)
                 doctor_instance.save()
             return Response({"message": "Nurse Added successfully"}, status=status.HTTP_201_CREATED)
         else:
-            new_error = {}
-            for field_name, field_errors in serializer.errors.items():
-                new_error[field_name] = field_errors[0]
-            return Response(new_error, status=status.HTTP_400_BAD_REQUEST)
+            return serializer_error(serializer)
 
     def delete(self, request, pk=None):
         data = request.data
         # Get Doctor
-        doctor_instance = Doctor.objects.get(user=data['doctor'])
+        doctor_instance = get_object_or_404(
+            Doctor.objects.select_related('user'), user=data.get('doctor'))
         # Get Nurse For Delete
-        nurse_instance = Nurse.objects.get(user=data['nurse'])
+        nurse_instance = get_object_or_404(
+            Nurse.objects.select_related('user'), user=data.get('nurse'))
         doctor_instance.nurse.remove(nurse_instance)
         return Response({"message": "Nurse deleted"}, status=status.HTTP_204_NO_CONTENT)
 
@@ -493,7 +494,7 @@ class GetRelatedUser(APIView):
             serializer = DoctorSerializer(doctors, many=True)
             count = doctors.count()
 
-        return Response({"count": count, "data": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"result": count, "data": serializer.data}, status=status.HTTP_200_OK)
 
 
 class DoctorsName(generics.ListCreateAPIView):
