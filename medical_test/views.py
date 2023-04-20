@@ -83,7 +83,7 @@ class AddPatientMedicalImage(views.APIView):
         if serializer.is_valid():
             for device_token, doctor in doctor_devices.items():
                 send_notification(
-                    patient, doctor, device_token, 'Imaged Upload')
+                    patient, doctor, device_token, 'Image  Medical Test Upload')
             serializer.save(patient=patient)
             return Response({'message': 'Image  Medical Test added successfully'}, status=status.HTTP_200_OK)
         else:
@@ -102,7 +102,7 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
 
     def post(self, request, pk=None):
         patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
-        doctors = patient.nurse.select_related('user').all()
+        doctors = patient.doctor.select_related('user').all()
         serializer = PatientRaysImageSerializer(data=request.data)
         doctor_devices = {}
         for doctor_id in doctors:
@@ -113,7 +113,7 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
         if serializer.is_valid():
             for device_token, doctor in doctor_devices.items():
                 send_notification(
-                    patient, doctor, device_token, 'Imaged Upload')
+                    patient, doctor, device_token, 'Image Rays Upload')
             serializer.save(patient=patient)
             return Response({'message': 'Image Rays added successfully'}, status=status.HTTP_200_OK)
 

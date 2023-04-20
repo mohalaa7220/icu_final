@@ -149,7 +149,7 @@ class Login(ObtainAuthToken):
             user = serializer.validated_data['user']
             # Retrieve device token from request data
             # FCMDevice.objects.get_or_create(
-            #     registration_id=device_token, user=user)
+            #     registration_id=device_token, user=user , active=True)
             token, create = Token.objects.get_or_create(user=user)
             response = {
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
@@ -164,6 +164,14 @@ class Login(ObtainAuthToken):
 # ----- Logout
 class LogoutView(APIView):
     def post(self, request, format=None):
+        device_token = request.POST.get('device_token')
+
+    # Deactivate the FCMDevice object for the user and device token
+        device = FCMDevice.objects.filter(
+            user=request.user, registration_id=device_token).first()
+        if device:
+            device.is_active = False
+            device.save()
         request.auth.delete()
         return Response(status=status.HTTP_200_OK)
 

@@ -7,7 +7,8 @@ from notification.models import NotificationApp
 
 def send_notification(patient, user, device_token, title=''):
     # Get the registered FCMDevice tokens
-    devices = FCMDevice.objects.filter(user=user, registration_id=device_token)
+    devices = FCMDevice.objects.filter(
+        user=user, registration_id=device_token, active=True)
     registration_ids = [device.registration_id for device in devices]
 
     message = messaging.MulticastMessage(
