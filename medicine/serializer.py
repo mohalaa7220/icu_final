@@ -11,7 +11,7 @@ class MedicinesSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         name = Medicines.objects.filter(name=attrs.get('name')).exists()
-        if not name:
+        if name:
             raise serializers.ValidationError(
                 {'message': 'This name already exists'})
         return attrs
