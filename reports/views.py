@@ -116,7 +116,7 @@ class AddNurseReport(generics.ListCreateAPIView):
         doctor_ids = data.get('doctor')
         doctor_devices = {}
         for doctor_id in doctor_ids:
-            doctor = User.objects.get(id=doctor_id)
+            doctor = User.objects.get(id=doctor_id.user.id)
             devices = FCMDevice.objects.filter(user=doctor)
             for device in devices:
                 doctor_devices[device.registration_id] = doctor
@@ -280,17 +280,17 @@ class AddNurseReportForAllDoctors(generics.ListCreateAPIView):
         doctors = patient.doctor.all()
         doctor_devices = {}
         for doctor_id in doctors:
-            doctor = User.objects.get(id=doctor_id)
+            doctor = User.objects.get(id=doctor_id.user.id)
             devices = FCMDevice.objects.filter(user=doctor)
             for device in devices:
                 doctor_devices[device.registration_id] = doctor
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
-            serializer.save(added_by=nurse, doctor=doctors)
             for device_token, doctor in doctor_devices.items():
                 send_notification(
                     patient, doctor, device_token, 'Report Added')
+            serializer.save(added_by=nurse, doctor=doctors)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)

@@ -2,10 +2,11 @@ from rest_framework import generics, views
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Doctor, Patient, MedicalTest
-from .serializer import (DoctorMedicalSerializer,
-                         ResultDoctorMedicalSerializer, ResultPatientMedicalSerializer)
+from .serializer import (DoctorMedicalSerializer, ResultDoctorMedicalSerializer,
+                         ResultPatientMedicalSerializer, PatientMedicalImageSerializer, PatientRaysImageSerializer)
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsDoctor
+from users.models import User
 from django.shortcuts import get_object_or_404
 from project.serializer_error import serializer_error
 from project.notify_global import send_notification
@@ -64,4 +65,64 @@ class PatientMedical(views.APIView):
         medical = patient.patient_medical.prefetch_related(
             'nurse__user', 'doctor__user').all()
         serializer = ResultPatientMedicalSerializer(medical, many=True).data
+        return Response({'data': serializer}, status=status.HTTP_200_OK)
+
+
+class AddPatientMedicalImage(views.APIView):
+
+    def post(self, request, pk=None):
+        patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
+        doctors = patient.doctor.select_related('user').all()
+        serializer = PatientMedicalImageSerializer(data=request.data)
+        doctor_devices = {}
+        for doctor_id in doctors:
+            doctor = User.objects.get(id=doctor_id.user.id)
+            devices = FCMDevice.objects.filter(user=doctor)
+            for device in devices:
+                doctor_devices[device.registration_id] = doctor
+        if serializer.is_valid():
+            for device_token, doctor in doctor_devices.items():
+                send_notification(
+                    patient, doctor, device_token, 'Imaged Upload')
+            serializer.save(patient=patient)
+            return Response({'message': 'Image  Medical Test added successfully'}, status=status.HTTP_200_OK)
+        else:
+            return serializer_error(serializer)
+
+    def get(self, request, pk=None):
+        patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
+        patient_medical_image = patient.patient_medical_image.all()
+        serializer = PatientMedicalImageSerializer(
+            patient_medical_image, many=True).data
+        return Response({'data': serializer}, status=status.HTTP_200_OK)
+
+
+class AddPatientRaysImage(generics.ListCreateAPIView):
+    serializer_class = PatientRaysImageSerializer
+
+    def post(self, request, pk=None):
+        patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
+        doctors = patient.nurse.select_related('user').all()
+        serializer = PatientRaysImageSerializer(data=request.data)
+        doctor_devices = {}
+        for doctor_id in doctors:
+            doctor = User.objects.get(id=doctor_id.user.id)
+            devices = FCMDevice.objects.filter(user=doctor)
+            for device in devices:
+                doctor_devices[device.registration_id] = doctor
+        if serializer.is_valid():
+            for device_token, doctor in doctor_devices.items():
+                send_notification(
+                    patient, doctor, device_token, 'Imaged Upload')
+            serializer.save(patient=patient)
+            return Response({'message': 'Image Rays added successfully'}, status=status.HTTP_200_OK)
+
+        else:
+            return serializer_error(serializer)
+
+    def get(self, request, pk=None):
+        patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
+        patient_medical_image = patient.patient_rays_image.all()
+        serializer = PatientMedicalImageSerializer(
+            patient_medical_image, many=True).data
         return Response({'data': serializer}, status=status.HTTP_200_OK)
