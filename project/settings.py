@@ -1,6 +1,6 @@
 
 from pathlib import Path
-
+import dj_database_url
 import firebase_admin
 from firebase_admin import credentials, messaging
 
@@ -67,7 +67,6 @@ REST_FRAMEWORK = {
 
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
     ),
 
 }
@@ -132,6 +131,13 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+
+DATABASES['default'] = dj_database_url.parse(
+    'postgres://icu_bgn1_user:32rSkAlzfY1bj93kDd7n3DhXEYc7gmfg@dpg-ch0rn433cv203bt3ndgg-a.oregon-postgres.render.com/icu_bgn1',
+    conn_max_age=600,
+    conn_health_checks=True,
+)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
