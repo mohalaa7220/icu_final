@@ -148,8 +148,8 @@ class Login(ObtainAuthToken):
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data['user']
             # Retrieve device token from request data
-            # FCMDevice.objects.get_or_create(
-            #     registration_id=device_token, user=user , active=True)
+            FCMDevice.objects.get_or_create(
+                registration_id=device_token, user=user, active=True)
             token, create = Token.objects.get_or_create(user=user)
             response = {
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
