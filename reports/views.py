@@ -195,7 +195,7 @@ class GetNurseReport(views.APIView):
                 'patient', 'added_by').all()
             serializer = ResultNurseReportAddedDoctorSerializer(
                 report, many=True)
-            return Response({'result': len(serializer.data), "reports": serializer.data}, status=status.HTTP_200_OK)
+            return Response({'result': len(serializer.data), "data": serializer.data}, status=status.HTTP_200_OK)
 
 
 # ======================= Return & Add Report For patient =======================================
@@ -241,13 +241,14 @@ class NursePatientReportDetail(views.APIView):
 
 
 # ========== AddDoctorReportForAllNurse ===========
-class AddDoctorReportForAllNurse(generics.ListCreateAPIView):
+class AddDoctorReportForAllNurse(views.APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = DoctorReportAllNursesSerializer
 
     def post(self, serializer, pk=None):
         data = self.request.data
-        doctor = Doctor.objects.get(user=self.request.user)
+        doctor = Doctor.objects.select_related(
+            'user').get(user=self.request.user)
         patient = get_object_or_404(Patient, id=data.get('patient'))
         nurses = patient.nurse.all()
         nurse_devices = {}
@@ -268,7 +269,7 @@ class AddDoctorReportForAllNurse(generics.ListCreateAPIView):
 
 
 # ========== AddNurseReportForAllDoctors ===========
-class AddNurseReportForAllDoctors(generics.ListCreateAPIView):
+class AddNurseReportForAllDoctors(views.APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = NurseReportAllDoctorsSerializer
 

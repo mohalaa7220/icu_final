@@ -28,7 +28,7 @@ urlpatterns = [
     path("nurse_reports/<int:id>", GetNurseReport.as_view(), name="nurse_reports"),
 
 
-    # Will Be Removed
+    # Return report from patient screen
     path("<str:pk>/doctor_patient_report/",
          DoctorPatientReport.as_view(), name="patient_report"),
 

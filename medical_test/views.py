@@ -33,10 +33,10 @@ class AddDoctorMedical(views.APIView):
                 nurse_devices[device.registration_id] = nurse_id.user_id
 
         if serializer.is_valid():
-            serializer.save(doctor=doctor, nurse=nurses)
             for device_token, nurse_id.user_id in nurse_devices.items():
                 send_notification(
-                    patient, nurse_id.user_id, device_token, 'Medical Added')
+                    patient, nurse_id.user_id, device_token, 'Medical Test Added')
+                serializer.save(doctor=doctor, nurse=nurses)
             return Response(data={"message": "Medical Test Added"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
