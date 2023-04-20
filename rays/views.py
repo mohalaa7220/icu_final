@@ -27,14 +27,14 @@ class AddDoctorRays(generics.ListCreateAPIView):
 
         nurse_devices = {}
         for nurse_id in nurses:
-            devices = FCMDevice.objects.filter(user=nurse_id.user_id)
+            devices = FCMDevice.objects.filter(user=nurse_id.user)
             for device in devices:
-                nurse_devices[device.registration_id] = nurse_id.user_id
+                nurse_devices[device.registration_id] = nurse_id.user
 
         if serializer.is_valid():
-            for device_token, nurse_id.user_id in nurse_devices.items():
+            for device_token, nurse_id in nurse_devices.items():
                 send_notification(
-                    patient, nurse_id.user_id, device_token, 'Rays Added')
+                    patient, nurse_id, device_token, 'Rays Added')
             serializer.save(doctor=doctor, nurse=nurses)
             return Response(data={"message": "Rays Added successfully"}, status=status.HTTP_201_CREATED)
         else:

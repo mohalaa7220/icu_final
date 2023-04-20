@@ -1,8 +1,11 @@
-from firebase_admin import messaging, firestore
+from firebase_admin import messaging
 from fcm_django.models import FCMDevice
-from django.utils import timezone
-
 from notification.models import NotificationApp
+
+from django.conf import settings
+
+from django.contrib.sessions.models import Session
+from django.utils import timezone
 
 
 def send_notification(patient, user, device_token, title=''):
@@ -11,6 +14,22 @@ def send_notification(patient, user, device_token, title=''):
         user=user, registration_id=device_token, active=True)
     registration_ids = [device.registration_id for device in devices]
 
+    # Check if the user has an active session
+    try:
+        session_key = user.session_key
+        session = Session.objects.get(pk=session_key)
+        last_activity = session.get_decoded().get('_last_activity')
+        if last_activity is not None:
+            elapsed_time = timezone.now() - last_activity
+            if elapsed_time.total_seconds() >= settings.SESSION_COOKIE_AGE:
+                # Session has expired
+                raise Session.DoesNotExist
+    except (Session.DoesNotExist, AttributeError):
+        # User does not have an active session
+        print('User does not have an active session')
+        return
+
+    # User has an active session, so send the notification to the registered devices
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
             title=title, body=f"{title} for Patient ({patient.name}) in room number {patient.room_number}"),

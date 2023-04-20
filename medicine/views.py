@@ -107,16 +107,17 @@ class AddMedicineAllNurses(views.APIView):
         nurses = patient.nurse.all()
         nurse_devices = {}
         for nurse_id in nurses:
-            devices = FCMDevice.objects.filter(user=nurse_id.user_id)
+            devices = FCMDevice.objects.filter(user=nurse_id.user)
             for device in devices:
-                nurse_devices[device.registration_id] = nurse_id.user_id
+                nurse_devices[device.registration_id] = nurse_id.user
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
-            serializer.save(doctor=doctor_added, nurse=nurses)
-            for device_token, nurse_id.user_id in nurse_devices.items():
+            for device_token, nurse_id in nurse_devices.items():
+                print(nurse_id)
                 send_notification(
-                    patient, nurse_id.user_id, device_token, 'Medicines Added')
+                    patient, nurse_id, device_token, 'Medicines Added')
+            serializer.save(doctor=doctor_added, nurse=nurses)
             return Response(data={"message": "Medicine Added successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)

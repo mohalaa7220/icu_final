@@ -251,18 +251,22 @@ class AddDoctorReportForAllNurse(views.APIView):
             'user').get(user=self.request.user)
         patient = get_object_or_404(Patient, id=data.get('patient'))
         nurses = patient.nurse.all()
+
         nurse_devices = {}
         for nurse_id in nurses:
-            devices = FCMDevice.objects.filter(user=nurse_id.user_id)
+            devices = FCMDevice.objects.filter(user=nurse_id.user)
             for device in devices:
-                nurse_devices[device.registration_id] = nurse_id.user_id
+                nurse_devices[device.registration_id] = nurse_id.user
+
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
-            serializer.save(added_by=doctor, nurse=nurses)
-            for device_token, nurse_id.user_id in nurse_devices.items():
+
+            for device_token, nurse_id in nurse_devices.items():
                 send_notification(
-                    patient, nurse_id.user_id, device_token, 'Report Added')
+                    patient, nurse_id, device_token, 'Report Added')
+
+            serializer.save(added_by=doctor, nurse=nurses)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
@@ -281,10 +285,9 @@ class AddNurseReportForAllDoctors(views.APIView):
         doctors = patient.doctor.all()
         doctor_devices = {}
         for doctor_id in doctors:
-            doctor = User.objects.get(id=doctor_id.user.id)
-            devices = FCMDevice.objects.filter(user=doctor)
+            devices = FCMDevice.objects.filter(user=doctor_id.user)
             for device in devices:
-                doctor_devices[device.registration_id] = doctor
+                doctor_devices[device.registration_id] = doctor_id.user
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():

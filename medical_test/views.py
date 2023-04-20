@@ -28,14 +28,14 @@ class AddDoctorMedical(views.APIView):
 
         nurse_devices = {}
         for nurse_id in nurses:
-            devices = FCMDevice.objects.filter(user=nurse_id.user_id)
+            devices = FCMDevice.objects.filter(user=nurse_id.user)
             for device in devices:
-                nurse_devices[device.registration_id] = nurse_id.user_id
+                nurse_devices[device.registration_id] = nurse_id.user
 
         if serializer.is_valid():
-            for device_token, nurse_id.user_id in nurse_devices.items():
+            for device_token, nurse_id in nurse_devices.items():
                 send_notification(
-                    patient, nurse_id.user_id, device_token, 'Medical Test Added')
+                    patient, nurse_id, device_token, 'Medical Test Added')
                 serializer.save(doctor=doctor, nurse=nurses)
             return Response(data={"message": "Medical Test Added"}, status=status.HTTP_201_CREATED)
         else:
@@ -76,14 +76,13 @@ class AddPatientMedicalImage(views.APIView):
         serializer = PatientMedicalImageSerializer(data=request.data)
         doctor_devices = {}
         for doctor_id in doctors:
-            doctor = User.objects.get(id=doctor_id.user.id)
-            devices = FCMDevice.objects.filter(user=doctor)
+            devices = FCMDevice.objects.filter(user=doctor_id.user)
             for device in devices:
-                doctor_devices[device.registration_id] = doctor
+                doctor_devices[device.registration_id] = doctor_id.user
         if serializer.is_valid():
             for device_token, doctor in doctor_devices.items():
-                send_notification(
-                    patient, doctor, device_token, 'Image  Medical Test Upload')
+                send_notification(patient, doctor, device_token,
+                                  'Image  Medical Test Upload')
             serializer.save(patient=patient)
             return Response({'message': 'Image  Medical Test added successfully'}, status=status.HTTP_200_OK)
         else:
@@ -106,10 +105,9 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
         serializer = PatientRaysImageSerializer(data=request.data)
         doctor_devices = {}
         for doctor_id in doctors:
-            doctor = User.objects.get(id=doctor_id.user.id)
-            devices = FCMDevice.objects.filter(user=doctor)
+            devices = FCMDevice.objects.filter(user=doctor_id.user)
             for device in devices:
-                doctor_devices[device.registration_id] = doctor
+                doctor_devices[device.registration_id] = doctor_id.user
         if serializer.is_valid():
             for device_token, doctor in doctor_devices.items():
                 send_notification(

@@ -56,7 +56,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     image = models.ImageField(upload_to=upload_to, null=True, blank=True)
 
     added_by = models.ForeignKey('self', models.CASCADE, null=True, blank=True)
-
+    device_token = models.CharField(max_length=255, blank=True, null=True)
     gender = models.CharField(max_length=100)
     age = models.CharField(max_length=3, blank=True, null=True)
     nat_id = models.CharField(blank=True, null=True, max_length=14)
