@@ -9,7 +9,7 @@ urlpatterns = [
     path('add_medicine_all_nurses',
          AddMedicineAllNurses.as_view(), name='medicine_nurses'),
 
-    path('medicines', GetMedicineUser.as_view(), name='medicines_user'),
+    path('medicines/', GetMedicineUser.as_view(), name='medicines_user'),
 
     path('medicines/<str:pk>', GetMedicineUser.as_view(),
          name='medicines_user_details'),

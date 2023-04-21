@@ -11,7 +11,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from .permissions import IsAdminRole, IsNurse, IsDoctor, IsSuperUser
-from .serializer import (SignUpAdminSerializer, SignUpUserSerializer, AddNurseSerializer, UpdateUserSerializer,
+from .serializer import (SignUpAdminSerializer, SignUpUserSerializer, AddNurseSerializer, UpdateUserSerializer, UpdatePatientProfileSerializer,
                          UserSerializer, SimpleUserSerializer, NurseSerializer, DoctorSerializer, UsersName,
                          AddPatient, PatientSerializer, PatientDoctorsSerializer, PatientNurseSerializer,
                          ResetPasswordSerializer, VerifyOtpSerializer, PasswordSerializer, UpdateProfileSerializer)
@@ -149,7 +149,7 @@ class Login(ObtainAuthToken):
             user = serializer.validated_data['user']
             # Retrieve device token from request data
             FCMDevice.objects.get_or_create(
-                registration_id=device_token, user=user, active=True)
+                registration_id=device_token, user=user, active=True, type='android')
             token, create = Token.objects.get_or_create(user=user)
             response = {
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
@@ -256,7 +256,7 @@ class DoctorNurse(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Doctor.objects.prefetch_related('doctor_nurse')
+        queryset = Doctor.objects.prefetch_related('nurse')
         if pk := self.kwargs.get('pk'):
             queryset = queryset.select_related('user').filter(user_id=pk)
         else:
@@ -329,8 +329,8 @@ class UserDetails(generics.RetrieveUpdateDestroyAPIView):
 
 
 # ----- Add Patients -----------
-class SignupPatients(generics.CreateAPIView):
-    permission_classes = [IsAdminRole, IsAuthenticated]
+class SignupPatients(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsAdminRole]
     serializer_class = AddPatient
 
     def post(self, request: Request):
@@ -340,16 +340,9 @@ class SignupPatients(generics.CreateAPIView):
         serializer = self.serializer_class(data=data)
         if serializer.is_valid():
             serializer.save(added_by=admin)
-            response = {
-                "message": "Patient Created Successfully",
-            }
-
-            return Response(data=response, status=status.HTTP_201_CREATED)
+            return Response(data={"message": "Patient Created Successfully"}, status=status.HTTP_201_CREATED)
         else:
-            new_error = {}
-            for field_name, field_errors in serializer.errors.items():
-                new_error[field_name] = field_errors[0]
-            return Response(new_error, status=status.HTTP_400_BAD_REQUEST)
+            return serializer_error(serializer)
 
 
 # ----- Patients for admin ---------
@@ -380,15 +373,18 @@ class PatientDetailsAPI(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, pk=None):
         patient = self.get_object()
         data = request.data
-        serializer = AddPatient(instance=patient, data=data)
+        serializer = UpdatePatientProfileSerializer(
+            instance=patient, data=data, context={'patient': patient})
 
-        serializer.is_valid(raise_exception=True)
-        result = serializer.save()
-        response = {
-            "message": "Patient Updated successfully",
-            "patient": self.serializer_class(result).data,
-        }
-        return Response(data=response, status=status.HTTP_200_OK)
+        if serializer.is_valid():
+            result = serializer.save()
+            response = {
+                "message": "Patient Updated successfully",
+                "patient": self.serializer_class(result).data,
+            }
+            return Response(data=response, status=status.HTTP_200_OK)
+        else:
+            return serializer_error(serializer)
 
     def delete(self, request, pk=None):
         queryset = self.get_object()

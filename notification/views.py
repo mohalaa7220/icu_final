@@ -1,5 +1,5 @@
 from rest_framework.response import Response
-from rest_framework import status, views
+from rest_framework import status, views, generics
 from rest_framework.permissions import IsAuthenticated
 from .serializer import NotificationSerializer
 from .models import NotificationApp
@@ -16,8 +16,13 @@ class AllNotifications(views.APIView):
         return Response({"data": serializer_class}, status=status.HTTP_200_OK)
 
 
+class NotificationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = NotificationSerializer
+    queryset = NotificationApp.objects.select_related('user_sender', 'patient')
+
+
 # ReadNotifications
-class ReadNotifications(views.APIView):
+class NotReadNotifications(views.APIView):
     serializer_class = NotificationSerializer
 
     def get(self, request):

@@ -33,10 +33,10 @@ class ResultPatientMedicalSerializer(serializers.ModelSerializer):
 class PatientMedicalImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientMedicalImage
-        fields = ['image', 'created']
+        fields = ['id', 'image', 'created']
 
 
 class PatientRaysImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientRaysImage
-        fields = ['image', 'created']
+        fields = ['id', 'image', 'created']

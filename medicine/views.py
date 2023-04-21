@@ -59,7 +59,7 @@ class AddMedicineNurse(views.APIView):
 # ------- Get Medicine for Doctor
 class GetMedicineUser(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
-    serializer_class = SimpleResultMedicineSerializer
+    serializer_class = ResultMedicineSerializer
 
     def get(self, request, pk=None):
         doctor = request.user
@@ -67,11 +67,11 @@ class GetMedicineUser(generics.RetrieveUpdateDestroyAPIView):
             medicine = Medicine.objects.select_related(
                 'doctor', 'name', 'patient').prefetch_related("nurse").get(id=pk)
             serializer = self.serializer_class(medicine)
-            return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             medicine = Medicine.objects.select_related(
                 'doctor', 'name', 'patient').prefetch_related("nurse").filter(doctor=doctor)
-            serializer = ResultMedicineSerializer(medicine, many=True)
+            serializer = self.serializer_class(medicine, many=True)
             return Response({"results": medicine.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
     def delete(self, request, pk=None):
