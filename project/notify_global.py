@@ -18,17 +18,20 @@ def has_active_session(user):
     """
     try:
         session_key = user.session_key
+        print(f"session_key: {session_key}")  # Debug statement
         session = Session.objects.get(pk=session_key)
         last_activity = session.get_decoded().get('_last_activity')
+        print(f"last_activity: {last_activity}")  # Debug statement
         if last_activity is not None:
             elapsed_time = timezone.now() - last_activity
+            print(f"elapsed_time: {elapsed_time}")  # Debug statement
             if elapsed_time.total_seconds() >= settings.SESSION_COOKIE_AGE:
                 # Session has expired
                 raise Session.DoesNotExist
     except (Session.DoesNotExist, AttributeError):
         # User does not have an active session
         print('User does not have an active session')
-        return False
+        return
 
     return True
 
