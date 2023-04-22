@@ -37,17 +37,16 @@ def has_active_session(user):
 
 
 def send_notification(patient, user, device_token, title=''):
-    """
-    Send a notification to the user's registered devices.
-    """
-    if not has_active_session(user):
-        logger.warning('User does not have an active session')
+    devices = FCMDevice.objects.filter(
+        registration_id=device_token, active=True)
+
+    # Check if any of the devices are associated with the current user
+    user_devices = devices.filter(user=user)
+    if not user_devices.exists():
+        logger.warning('User is not associated with device token')
         return
 
-    # Get the registered FCMDevice tokens
-    devices = FCMDevice.objects.filter(
-        user=user, registration_id=device_token, active=True)
-    registration_ids = [device.registration_id for device in devices]
+    registration_ids = [device.registration_id for device in user_devices]
 
     # Send the notification to the registered devices
     message = messaging.MulticastMessage(
