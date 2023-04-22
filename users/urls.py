@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import (SignUpAdminView, GetActiveAdminUser, SignUpUserView, Login,
+from .views import (SignUpAdminView, GetActiveAdminUser, SignUpUserView, Login, LogoutView,
                     LogoutView, LoginUser, AddDeleteNurseUser, NurseDoctor, DoctorNurse, AllDoctors, AllNurses,
                     GetPendingAdminUser, DetailsAdminUser, AccepterAdminUser, UserDetails, SignupPatients,
                     Patients, PatientDetailsAPI, PatientDeleteUser, GetUsersPatient, GetRelatedUser,
@@ -12,6 +12,7 @@ urlpatterns = [
     path("signup_admin", SignUpAdminView.as_view(), name="signup_admin"),
     path("signup_user", SignUpUserView.as_view(), name="signup_user"),
     path("login", Login.as_view(), name="login"),
+    path("logout", LogoutView.as_view(), name="logout"),
 
     path("update_profile",
          UpdateProfileAdmin.as_view(), name="update_profile"),

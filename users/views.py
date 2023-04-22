@@ -163,17 +163,17 @@ class Login(ObtainAuthToken):
 
 # ----- Logout
 class LogoutView(APIView):
-    def post(self, request, format=None):
-        device_token = request.POST.get('device_token')
+    permission_classes = [IsAuthenticated]
 
-    # Deactivate the FCMDevice object for the user and device token
-        device = FCMDevice.objects.filter(
-            user=request.user, registration_id=device_token).first()
+    def post(self, request, format=None):
+        # Deactivate the FCMDevice object for the user and device token
+        device = FCMDevice.objects.filter(user=request.user).first()
         if device:
+            print('YES')
             device.is_active = False
             device.save()
         request.auth.delete()
-        return Response(status=status.HTTP_200_OK)
+        return Response({"message": "Logout"}, status=status.HTTP_200_OK)
 
 
 # -------- Get Login User (Profile)

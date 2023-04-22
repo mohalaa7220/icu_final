@@ -190,27 +190,3 @@ EMAIL_HOST_USER = 'ma722072207220@gmail.com'
 EMAIL_HOST_PASSWORD = 'motazhtuhiyrgtuh'
 
 AUTH_USER_MODEL = 'users.User'
-
-
-# settings.py
-
-# Use the cache backend to store session data
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-
-# Name of the session cookie
-SESSION_COOKIE_NAME = 'sessionid'
-
-# Send the session cookie over HTTPS only
-SESSION_COOKIE_SECURE = True
-
-# Make the session cookie inaccessible to client-side JavaScript
-SESSION_COOKIE_HTTPONLY = True
-
-# Set the maximum age of the session cookie to 7 days (in seconds)
-SESSION_COOKIE_AGE = 604800
-
-# Expire the session when the user closes their browser
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# Save the session data to the backend on every request
-SESSION_SAVE_EVERY_REQUEST = True
