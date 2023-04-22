@@ -1,20 +1,21 @@
+import logging
+
 from firebase_admin import messaging
 from fcm_django.models import FCMDevice
 from notification.models import NotificationApp
 
 from django.conf import settings
-
 from django.contrib.sessions.models import Session
 from django.utils import timezone
 
 
-def send_notification(patient, user, device_token, title=''):
-    # Get the registered FCMDevice tokens
-    devices = FCMDevice.objects.filter(
-        user=user, registration_id=device_token, active=True)
-    registration_ids = [device.registration_id for device in devices]
+logger = logging.getLogger(__name__)
 
-    # Check if the user has an active session
+
+def has_active_session(user):
+    """
+    Check if the user has an active session.
+    """
     try:
         session_key = user.session_key
         session = Session.objects.get(pk=session_key)
@@ -27,9 +28,25 @@ def send_notification(patient, user, device_token, title=''):
     except (Session.DoesNotExist, AttributeError):
         # User does not have an active session
         print('User does not have an active session')
+        return False
+
+    return True
+
+
+def send_notification(patient, user, device_token, title=''):
+    """
+    Send a notification to the user's registered devices.
+    """
+    if not has_active_session(user):
+        logger.warning('User does not have an active session')
         return
 
-    # User has an active session, so send the notification to the registered devices
+    # Get the registered FCMDevice tokens
+    devices = FCMDevice.objects.filter(
+        user=user, registration_id=device_token, active=True)
+    registration_ids = [device.registration_id for device in devices]
+
+    # Send the notification to the registered devices
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
             title=title, body=f"{title} for Patient ({patient.name}) in room number {patient.room_number}"),
@@ -45,10 +62,10 @@ def send_notification(patient, user, device_token, title=''):
                 message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
             )
 
-            print(f'Message sent to device {i}')
+            logger.info(f'Message sent to device {i}')
         else:
             device = devices[i]
             device.is_active = False
             device.save()
-            print(
+            logger.error(
                 f'Error sending message to device {i}: {result.exception}')
