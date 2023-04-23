@@ -170,7 +170,7 @@ class LogoutView(APIView):
         device = FCMDevice.objects.filter(user=request.user).first()
         if device:
             print('YES')
-            device.is_active = False
+            device.active = False
             device.save()
         request.auth.delete()
         return Response({"message": "Logout"}, status=status.HTTP_200_OK)
