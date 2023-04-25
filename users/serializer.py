@@ -272,22 +272,22 @@ class PatientSerializer(serializers.ModelSerializer):
 
 # ----- Return Patient for doctor and nurse
 class PatientDoctorsSerializer(serializers.ModelSerializer):
-    nurse = UsersPatientSerializer(many=True, read_only=True)
+    user = UsersPatientSerializer(many=True, read_only=True, source='nurse')
 
     class Meta:
         model = Patient
         fields = ['id', 'name', 'image', 'disease_type', 'room_number', 'address',
-                  'phone',  'age', 'status', 'nurse']
+                  'phone',  'age', 'status', 'user']
 
 
 # ----- Return Patient for doctor and nurse
 class PatientNurseSerializer(serializers.ModelSerializer):
-    doctor = UsersPatientSerializer(many=True, read_only=True)
+    user = UsersPatientSerializer(many=True, read_only=True, source='doctor')
 
     class Meta:
         model = Patient
         fields = ['id', 'name', 'image', 'disease_type', 'room_number',
-                  'phone',  'age', 'status', 'doctor']
+                  'phone',  'age', 'status', 'user']
 
 
 class UsersName(serializers.ModelSerializer):

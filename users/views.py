@@ -172,7 +172,6 @@ class LogoutView(APIView):
             print('YES')
             device.active = False
             device.save()
-        request.auth.delete()
         return Response({"message": "Logout"}, status=status.HTTP_200_OK)
 
 
