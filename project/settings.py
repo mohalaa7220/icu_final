@@ -2,7 +2,7 @@
 from pathlib import Path
 import dj_database_url
 import firebase_admin
-from firebase_admin import credentials, messaging
+from firebase_admin import credentials
 
 
 # Initialize Firebase Admin SDK
