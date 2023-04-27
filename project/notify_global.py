@@ -3,56 +3,39 @@ from firebase_admin import messaging
 from fcm_django.models import FCMDevice
 from notification.models import NotificationApp
 from users.models import User
-from django.conf import settings
-from django.contrib.sessions.models import Session
-from django.utils import timezone
-from django.db.models import Q
-
 
 logger = logging.getLogger(__name__)
-
-
-def has_active_session(user):
-    """
-    Check if the user has an active session.
-    """
-    try:
-        session_key = user.session_key
-        print(f"session_key: {session_key}")  # Debug statement
-        session = Session.objects.get(pk=session_key)
-        last_activity = session.get_decoded().get('_last_activity')
-        print(f"last_activity: {last_activity}")  # Debug statement
-        if last_activity is not None:
-            elapsed_time = timezone.now() - last_activity
-            print(f"elapsed_time: {elapsed_time}")  # Debug statement
-            if elapsed_time.total_seconds() >= settings.SESSION_COOKIE_AGE:
-                # Session has expired
-                raise Session.DoesNotExist
-    except (Session.DoesNotExist, AttributeError):
-        # User does not have an active session
-        print('User does not have an active session')
-        return
-
-    return True
 
 
 def send_notification(patient, user, device_token, title=''):
     headnursing_users = User.objects.filter(role='headnursing')
 
+    device_headnursing_users = FCMDevice.objects.filter(
+        user__in=headnursing_users)
+
     devices = FCMDevice.objects.filter(
         registration_id=device_token, active=True)
 
-    user_devices = devices.filter(Q(user=user) | Q(user__in=headnursing_users))
+    user_devices = devices.filter(user=user)
+
     if not user_devices.exists():
         logger.warning('User is not associated with device token')
         return
 
-    registration_ids = [device.registration_id for device in user_devices]
+    registration_tokens = []
+
+    # Loop through the devices associated with head nursing colleagues
+    for device in device_headnursing_users:
+        registration_tokens.append(device.registration_id)
+
+    # Loop through the devices associated with the user
+    for device in user_devices:
+        registration_tokens.append(device.registration_id)
 
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
             title=title, body=f"{title} for Patient ({patient.name}) in room number {patient.room_number}"),
-        tokens=registration_ids,
+        tokens=registration_tokens,
     )
 
     response = messaging.send_multicast(message)
@@ -64,7 +47,7 @@ def send_notification(patient, user, device_token, title=''):
                 message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
             )
 
-            logger.info(f'Message sent to device {i}')
+            print(f'Message sent to device {i}')
         else:
             device = devices[i]
             device.is_active = False

@@ -37,7 +37,7 @@ class AddDoctorReport(generics.ListCreateAPIView):
         if serializer.is_valid():
             for device_token, nurse in nurse_devices.items():
                 send_notification(patient, nurse, device_token, 'Report Added')
-            serializer.save(added_by=doctor)
+            # serializer.save(added_by=doctor)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
