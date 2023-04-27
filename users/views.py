@@ -20,7 +20,7 @@ from rest_framework.authentication import SessionAuthentication
 from project.serializer_error import serializer_error
 from django.contrib.auth import get_user_model
 User = get_user_model()
-
+                                       
 
 # ---------- SignUp Admin View
 class SignUpAdminView(generics.GenericAPIView):
