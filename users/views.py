@@ -1,6 +1,6 @@
-from rest_framework import generics, status
+from rest_framework import generics, status     
 from fcm_django.models import FCMDevice
-from django.db.models import Q
+from django.db.models import Q    
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from .email_send import send_via_email, send_otp_via_email
@@ -20,7 +20,7 @@ from rest_framework.authentication import SessionAuthentication
 from project.serializer_error import serializer_error
 from django.contrib.auth import get_user_model
 User = get_user_model()
-
+                                       
 
 # ---------- SignUp Admin View
 class SignUpAdminView(generics.GenericAPIView):
