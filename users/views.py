@@ -173,7 +173,7 @@ class LogoutView(APIView):
             for device_user in device:
                 device_user.active = False
                 device_user.save()
-            print('YES User has device')
+            print('YES USER HAS DEVICE')
 
         return Response({"message": "Logout"}, status=status.HTTP_200_OK)
 
