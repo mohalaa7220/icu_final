@@ -278,8 +278,13 @@ class AllDoctors(generics.ListCreateAPIView):
 
     def get(self, request):
         user = self.request.user
-        query = User.objects.select_related('added_by').filter(
-            Q(added_by=user) & Q(role='doctor'))
+        name = request.query_params.get('name', None)
+        if name:
+            query = User.objects.select_related('added_by').filter(
+                Q(added_by=user) & Q(role='doctor') & Q(name__icontains=name))
+        else:
+            query = User.objects.select_related('added_by').filter(
+                Q(added_by=user) & Q(role='doctor'))
         serializer = self.serializer_class(query, many=True).data
         return Response({"result": query.count(), 'data': serializer}, status=status.HTTP_200_OK)
 
@@ -291,8 +296,13 @@ class AllNurses(generics.ListCreateAPIView):
 
     def get(self, request):
         user = self.request.user
-        query = User.objects.select_related('added_by').filter(
-            Q(added_by=user) & Q(role='nurse'))
+        name = request.query_params.get('name', None)
+        if name:
+            query = User.objects.select_related('added_by').filter(
+                Q(added_by=user) & Q(role='nurse') & Q(name__icontains=name))
+        else:
+            query = User.objects.select_related('added_by').filter(
+                Q(added_by=user) & Q(role='nurse'))
         serializer = self.serializer_class(query, many=True).data
         return Response({"result": query.count(), 'data': serializer}, status=status.HTTP_200_OK)
 
@@ -351,8 +361,16 @@ class Patients(generics.ListCreateAPIView):
 
     def get(self, request):
         admin = Admin.objects.get(user_id=self.request.user)
-        queryset = admin.added_admin.prefetch_related(
-            'doctor__user', 'nurse__user')
+
+        search_term = self.request.query_params.get('name', None)
+
+        if search_term:
+            queryset = admin.added_admin.filter(
+                name__icontains=search_term).prefetch_related('doctor__user', 'nurse__user')
+        else:
+            queryset = admin.added_admin.prefetch_related(
+                'doctor__user', 'nurse__user')
+
         serializer = PatientSerializer(queryset, many=True).data
         return Response({"result": queryset.count(), 'data': serializer}, status=status.HTTP_200_OK)
 

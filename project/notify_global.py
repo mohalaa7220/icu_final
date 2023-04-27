@@ -1,12 +1,12 @@
 import logging
-
 from firebase_admin import messaging
 from fcm_django.models import FCMDevice
 from notification.models import NotificationApp
-
+from users.models import User
 from django.conf import settings
 from django.contrib.sessions.models import Session
 from django.utils import timezone
+from django.db.models import Q
 
 
 logger = logging.getLogger(__name__)
@@ -37,11 +37,13 @@ def has_active_session(user):
 
 
 def send_notification(patient, user, device_token, title=''):
+    headnursing_users = User.objects.filter(role='headnursing')
+
     devices = FCMDevice.objects.filter(
         registration_id=device_token, active=True)
 
     # Check if any of the devices are associated with the current user
-    user_devices = devices.filter(user=user)
+    user_devices = devices.filter(Q(user=user) | Q(user__in=headnursing_users))
     if not user_devices.exists():
         logger.warning('User is not associated with device token')
         return
