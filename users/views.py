@@ -1,6 +1,6 @@
 from rest_framework import generics, status     
 from fcm_django.models import FCMDevice
-from django.db.models import Q
+from django.db.models import Q    
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from .email_send import send_via_email, send_otp_via_email
