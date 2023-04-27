@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Rays, Nurse
+from .models import Rays
 from users.serializer import UsersPatientSerializer
 
 
