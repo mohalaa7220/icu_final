@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status     
 from fcm_django.models import FCMDevice
 from django.db.models import Q
 from rest_framework.views import APIView
