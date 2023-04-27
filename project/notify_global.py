@@ -42,7 +42,6 @@ def send_notification(patient, user, device_token, title=''):
     devices = FCMDevice.objects.filter(
         registration_id=device_token, active=True)
 
-    # Check if any of the devices are associated with the current user
     user_devices = devices.filter(Q(user=user) | Q(user__in=headnursing_users))
     if not user_devices.exists():
         logger.warning('User is not associated with device token')
