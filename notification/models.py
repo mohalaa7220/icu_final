@@ -10,7 +10,7 @@ class NotificationApp(models.Model):
     user_receiver = models.ForeignKey(
         User, null=True, blank=True, related_name='user_receiver', on_delete=models.CASCADE)
     patient = models.ForeignKey(
-        Patient, null=True, blank=True, related_name='patient', on_delete=models.CASCADE)
+        Patient, null=True, blank=True, related_name='patient_notification', on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
     message = models.TextField(null=True, blank=True)
     title = models.CharField(max_length=220, null=True, blank=True)
