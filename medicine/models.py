@@ -31,6 +31,7 @@ class Medicine(models.Model):
     nurse = models.ManyToManyField(Nurse, related_name='nurse_medicine')
     patient = models.ForeignKey(
         Patient, related_name='patient_medicine', on_delete=models.SET_NULL, null=True)
+    status = models.BooleanField(default=False)
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
     created = models.DateTimeField(auto_now_add=True, null=True)

@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404
 from project.notify_global import send_notification
 from fcm_django.models import FCMDevice
 from project.serializer_error import serializer_error
+from datetime import datetime
+from django.db.models import Q, F
 
 
 # ------- Name of Medicines
@@ -69,8 +71,15 @@ class GetMedicineUser(generics.RetrieveUpdateDestroyAPIView):
             serializer = self.serializer_class(medicine)
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
-            medicine = Medicine.objects.select_related(
-                'doctor', 'name', 'patient').prefetch_related("nurse").filter(doctor=doctor)
+            selected_date = request.query_params.get('selected_date', None)
+            if selected_date:
+                selected_date_obj = datetime.strptime(
+                    selected_date, '%Y-%m-%d').date()
+                medicine = Medicine.objects.select_related('doctor', 'name', 'patient').prefetch_related(
+                    "nurse").filter(Q(doctor=doctor) & Q(start_date=selected_date_obj))
+            else:
+                medicine = Medicine.objects.select_related('doctor', 'name', 'patient').prefetch_related(
+                    "nurse").filter(doctor=doctor)
             serializer = self.serializer_class(medicine, many=True)
             return Response({"results": medicine.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -89,10 +98,17 @@ class GetMedicineNurse(generics.ListAPIView):
         user = request.user
         nurse = get_object_or_404(
             Nurse.objects.select_related('user'), user_id=user.id)
-        medicine = Medicine.objects.select_related(
-            'name', 'doctor', 'patient').filter(nurse=nurse)
+        selected_date = request.query_params.get('selected_date', None)
+        if selected_date:
+            selected_date_obj = datetime.strptime(
+                selected_date, '%Y-%m-%d').date()
+            medicine = Medicine.objects.select_related(
+                'name', 'doctor', 'patient').filter(Q(nurse=nurse) & Q(start_date=selected_date_obj))
+        else:
+            medicine = Medicine.objects.select_related(
+                'name', 'doctor', 'patient').filter(nurse=nurse)
         serializer = NurseResultMedicineSerializer(medicine, many=True)
-        return Response({"medicines": serializer.data}, status=status.HTTP_200_OK)
+        return Response({"results": medicine.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
 
 # -------  Add Medicines for all Nurses
@@ -121,3 +137,64 @@ class AddMedicineAllNurses(views.APIView):
             return Response(data={"message": "Medicine Added successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
+
+
+# GetPatientDoctorMedicines
+class GetPatientDoctorMedicines(views.APIView):
+    permission_classes = [IsAuthenticated, IsDoctor]
+
+    def get(self, request, pk=None):
+        doctor = request.user
+        patient = get_object_or_404(Patient, id=pk)
+        selected_date = request.query_params.get('selected_date', None)
+        if selected_date:
+            selected_date_obj = datetime.strptime(
+                selected_date, '%Y-%m-%d').date()
+            doctor_medicine = patient.patient_medicine.select_related('doctor', 'name').prefetch_related(
+                "nurse__user").filter(Q(doctor=doctor) & Q(start_date=selected_date_obj))
+        else:
+            doctor_medicine = patient.patient_medicine.select_related('doctor', 'name').prefetch_related(
+                "nurse__user").filter(doctor=doctor)
+        serializer_class = ResultMedicineSerializer(
+            doctor_medicine, many=True).data
+        return Response({'result': doctor_medicine.count(), 'data': serializer_class}, status=status.HTTP_200_OK)
+
+
+# GetPatientNurseMedicines
+class GetPatientNurseMedicines(views.APIView):
+    permission_classes = [IsAuthenticated, IsNurse]
+
+    def get(self, request, pk=None):
+        user = request.user
+        nurse = get_object_or_404(
+            Nurse.objects.select_related('user'), user_id=user.id)
+        patient = get_object_or_404(Patient, id=pk)
+        selected_date = request.query_params.get('selected_date', None)
+        if selected_date:
+            selected_date_obj = datetime.strptime(
+                selected_date, '%Y-%m-%d').date()
+            nurse_medicine = patient.patient_medicine.select_related('doctor', 'name').prefetch_related(
+                "nurse__user").filter(Q(nurse=nurse) & Q(start_date=selected_date_obj))
+        else:
+            nurse_medicine = patient.patient_medicine.select_related('doctor', 'name').prefetch_related(
+                "nurse__user").filter(nurse=nurse)
+        serializer_class = NurseResultMedicineSerializer(
+            nurse_medicine, many=True).data
+        return Response({'result': nurse_medicine.count(), 'data': serializer_class}, status=status.HTTP_200_OK)
+
+
+class CheckMedicine(views.APIView):
+    def put(self, request):
+        medicine_id = request.data.get('medicine_id')
+        Medicine.objects.filter(id=medicine_id).update(
+            status=True, updated=F('updated'))
+        doctor = Medicine.objects.get(id=medicine_id).doctor
+        patient = Medicine.objects.get(id=medicine_id).patient
+        doctor_devices = {}
+        devices = FCMDevice.objects.filter(user=doctor)
+        for device in devices:
+            doctor_devices[device.registration_id] = doctor
+        for device_token, doctor in doctor_devices.items():
+            send_notification(
+                patient, doctor, device_token, 'Medicine Take')
+        return Response({'message': "Done"}, status=status.HTTP_200_OK)
