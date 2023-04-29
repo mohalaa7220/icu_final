@@ -147,9 +147,24 @@ class Login(ObtainAuthToken):
         if email.exists() and email.get().is_active == True:
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data['user']
-            # Retrieve device token from request data
-            FCMDevice.objects.get_or_create(
-                registration_id=device_token, user=user, active=True, type='android')
+            # Get the existing FCMDevice object for the user
+            device = FCMDevice.objects.filter(user=user).first()
+
+            # If the device exists, update the registration_id and save the object
+            if device:
+                if device.registration_id != device_token:
+                    device.registration_id = device_token
+                    device.save()
+                    print(f'Device updated for user {user.username}')
+            else:
+                # If the device does not exist, create a new one for the user
+                device = FCMDevice.objects.create(
+                    registration_id=device_token,
+                    user=user,
+                    active=True,
+                    type='android'
+                )
+                print(f'Device created for user {user.username}')
             token, create = Token.objects.get_or_create(user=user)
             response = {
                 "user": UserSerializer(user, context=self.get_serializer_context()).data,
@@ -167,12 +182,12 @@ class LogoutView(APIView):
 
     def post(self, request, format=None):
         # Deactivate the FCMDevice object for the user and device token
-        device = FCMDevice.objects.filter(user=request.user)
-        if device:
-            for device_user in device:
-                device_user.active = False
-                device_user.save()
-            print('YES USER HAS DEVICE')
+        devices = FCMDevice.objects.filter(user=request.user)
+        if devices:
+            devices.delete()
+            print('Devices removed for user', request.user.username)
+        else:
+            print('No devices found for user', request.user.username)
 
         return Response({"message": "Logout"}, status=status.HTTP_200_OK)
 
