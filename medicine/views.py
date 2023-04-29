@@ -52,7 +52,7 @@ class AddMedicineNurse(views.APIView):
             serializer.save(doctor=doctor_added)
             for device_token, nurse in nurse_devices.items():
                 send_notification(
-                    patient, nurse, device_token, 'Medicine Added')
+                    patient, nurse, device_token, 'Medicine Added', self.request.user)
             return Response(data={"message": "Medicine saved successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
@@ -132,7 +132,7 @@ class AddMedicineAllNurses(views.APIView):
             for device_token, nurse_id in nurse_devices.items():
                 print(nurse_id)
                 send_notification(
-                    patient, nurse_id, device_token, 'Medicines Added')
+                    patient, nurse_id, device_token, 'Medicines Added', self.request.user)
             serializer.save(doctor=doctor_added, nurse=nurses)
             return Response(data={"message": "Medicine Added successfully"}, status=status.HTTP_201_CREATED)
         else:
@@ -196,5 +196,5 @@ class CheckMedicine(views.APIView):
             doctor_devices[device.registration_id] = doctor
         for device_token, doctor in doctor_devices.items():
             send_notification(
-                patient, doctor, device_token, 'Medicine Take')
+                patient, doctor, device_token, 'Medicine Take', self.request.user)
         return Response({'message': "Done"}, status=status.HTTP_200_OK)

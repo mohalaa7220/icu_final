@@ -7,7 +7,7 @@ from users.models import User
 logger = logging.getLogger(__name__)
 
 
-def send_notification(patient, user, device_token, title=''):
+def send_notification(patient, user, device_token, title='', user_sender=''):
     headnursing_users = User.objects.filter(role='headnursing')
 
     device_headnursing_users = FCMDevice.objects.filter(
@@ -38,15 +38,20 @@ def send_notification(patient, user, device_token, title=''):
         tokens=registration_tokens,
     )
 
+    users = [device.user for device in devices]
+
     response = messaging.send_multicast(message)
     for i, result in enumerate(response.responses):
         if result.success:
-            NotificationApp.objects.create(
-                patient=patient,
-                title=title,
-                message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
-            )
-
+            for user in users:
+                if user.role != 'headnursing':
+                    NotificationApp.objects.create(
+                        patient=patient,
+                        title=title,
+                        message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
+                        user_receiver=user,
+                        user_sender=user_sender
+                    )
             print(f'Message sent to device {i}')
         else:
             device = devices[i]

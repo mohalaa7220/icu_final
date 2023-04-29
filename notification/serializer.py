@@ -9,3 +9,13 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationApp
         exclude = ('user_receiver',)
+
+
+class NotificationHeadNursingSerializer(serializers.ModelSerializer):
+    user_sender = serializers.StringRelatedField()
+    user_receiver = serializers.StringRelatedField()
+    patient = serializers.StringRelatedField()
+
+    class Meta:
+        model = NotificationApp
+        fields = "__all__"

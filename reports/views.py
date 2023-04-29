@@ -36,7 +36,8 @@ class AddDoctorReport(generics.ListCreateAPIView):
         serializer = DoctorReportSerializer(data=data)
         if serializer.is_valid():
             for device_token, nurse in nurse_devices.items():
-                send_notification(patient, nurse, device_token, 'Report Added')
+                send_notification(patient, nurse, device_token,
+                                  'Report Added', self.request.user)
             serializer.save(added_by=doctor)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
@@ -129,8 +130,8 @@ class AddNurseReport(generics.ListCreateAPIView):
         if serializer.is_valid(raise_exception=True):
             for device_token, doctor in doctor_devices.items():
                 send_notification(
-                    patient, doctor, device_token, 'Report Added')
-            serializer.save(added_by=nurse)
+                    patient, doctor, device_token, 'Report Added', self.request.user)
+            # serializer.save(added_by=nurse)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
@@ -266,7 +267,7 @@ class AddDoctorReportForAllNurse(views.APIView):
 
             for device_token, nurse_id in nurse_devices.items():
                 send_notification(
-                    patient, nurse_id, device_token, 'Report Added')
+                    patient, nurse_id, device_token, 'Report Added', self.request.user)
 
             serializer.save(added_by=doctor, nurse=nurses)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
@@ -294,8 +295,9 @@ class AddNurseReportForAllDoctors(views.APIView):
 
         if serializer.is_valid():
             for device_token, doctor in doctor_devices.items():
+                print(device_token)
                 send_notification(
-                    patient, doctor, device_token, 'Report Added')
+                    patient, doctor, device_token, 'Report Added', self.request.user)
             serializer.save(added_by=nurse, doctor=doctors)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
