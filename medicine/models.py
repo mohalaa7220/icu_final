@@ -34,6 +34,7 @@ class Medicine(models.Model):
     status = models.BooleanField(default=False)
     start_date = models.DateField(null=True)
     end_date = models.DateField(null=True)
+    time_clock = models.TimeField(null=True)
     created = models.DateTimeField(auto_now_add=True, null=True)
     updated = models.DateTimeField(auto_now=True, null=True)
 
