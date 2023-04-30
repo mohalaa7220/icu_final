@@ -68,12 +68,14 @@ class PatientMedical(views.APIView):
         return Response({'data': serializer}, status=status.HTTP_200_OK)
 
 
-class AddPatientMedicalImage(views.APIView):
+class AddPatientMedicalImage(generics.ListCreateAPIView):
+    serializer_class = PatientMedicalImageSerializer
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, pk=None):
         patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
         doctors = patient.doctor.select_related('user').all()
-        serializer = PatientMedicalImageSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         doctor_devices = {}
         for doctor_id in doctors:
             devices = FCMDevice.objects.filter(user=doctor_id.user)
@@ -89,20 +91,25 @@ class AddPatientMedicalImage(views.APIView):
             return serializer_error(serializer)
 
     def get(self, request, pk=None):
+        print("self.request", self.request.user)
         patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
         patient_medical_image = patient.patient_medical_image.all()
-        serializer = PatientMedicalImageSerializer(
-            patient_medical_image, many=True).data
+        serializer = self.serializer_class(
+            patient_medical_image,
+            many=True,
+            context={'request': request}
+        ).data
         return Response({'data': serializer}, status=status.HTTP_200_OK)
 
 
 class AddPatientRaysImage(generics.ListCreateAPIView):
     serializer_class = PatientRaysImageSerializer
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, pk=None):
         patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
         doctors = patient.doctor.select_related('user').all()
-        serializer = PatientRaysImageSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         doctor_devices = {}
         for doctor_id in doctors:
             devices = FCMDevice.objects.filter(user=doctor_id.user)
@@ -121,6 +128,6 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
     def get(self, request, pk=None):
         patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
         patient_medical_image = patient.patient_rays_image.all()
-        serializer = PatientMedicalImageSerializer(
-            patient_medical_image, many=True).data
+        serializer = self.serializer_class(
+            patient_medical_image, many=True, context={'request': request}).data
         return Response({'data': serializer}, status=status.HTTP_200_OK)

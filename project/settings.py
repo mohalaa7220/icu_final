@@ -3,7 +3,7 @@ from pathlib import Path
 import dj_database_url
 import firebase_admin
 from firebase_admin import credentials
-
+import os
 
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate(
@@ -191,3 +191,6 @@ EMAIL_HOST_USER = 'ma722072207220@gmail.com'
 EMAIL_HOST_PASSWORD = 'motazhtuhiyrgtuh'
 
 AUTH_USER_MODEL = 'users.User'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
