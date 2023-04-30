@@ -41,7 +41,7 @@ class Medicine(models.Model):
     class Meta:
         verbose_name = 'Medicine'
         verbose_name_plural = 'Medicine'
-        ordering = ['-updated']
+        ordering = ['-created']
 
     def __str__(self) -> str:
         return self.name.name

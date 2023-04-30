@@ -22,6 +22,7 @@ class MedicalTest(models.Model):
     class Meta:
         verbose_name = 'Medical Test'
         verbose_name_plural = 'Medical Test'
+        ordering = ('-created',)
 
     def __str__(self):
         return self.name
@@ -36,6 +37,9 @@ class PatientMedicalImage(models.Model):
     def __str__(self) -> str:
         return self.patient.name
 
+    class Meta:
+        ordering = ('-created',)
+
 
 class PatientRaysImage(models.Model):
     image = models.ImageField(upload_to=upload_to, null=True, blank=True)
@@ -46,3 +50,6 @@ class PatientRaysImage(models.Model):
 
     def __str__(self) -> str:
         return self.patient.name
+
+    class Meta:
+        ordering = ('-created',)
