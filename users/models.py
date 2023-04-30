@@ -136,7 +136,7 @@ class Patient(models.Model):
     gender = models.CharField(max_length=7)
     status = models.CharField(max_length=150)
 
-    nat_id = models.IntegerField()
+    nat_id = models.CharField(blank=True, null=True, max_length=14)
     room_number = models.IntegerField()
     disease_type = models.CharField(max_length=250)
     phone = PhoneNumberField(null=True)
