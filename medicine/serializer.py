@@ -2,6 +2,20 @@ from rest_framework import serializers
 from .models import Medicines, Medicine
 from users.models import Nurse, Doctor
 from users.serializer import UsersPatientSerializer
+import datetime
+
+
+class Time12hSerializerField(serializers.Field):
+    def to_representation(self, value):
+        if value is None:
+            return None
+        return value.strftime('%I:%M %p')
+
+    def to_internal_value(self, data):
+        try:
+            return datetime.datetime.strptime(data, '%I:%M %p').time()
+        except ValueError:
+            raise serializers.ValidationError('Invalid time format')
 
 
 class MedicinesSerializer(serializers.ModelSerializer):
@@ -42,6 +56,7 @@ class ResultMedicineSerializer(serializers.ModelSerializer):
     nurse = UsersPatientSerializer(many=True, read_only=True)
     patient = serializers.StringRelatedField()
     name = serializers.StringRelatedField()
+    time_clock = Time12hSerializerField()
 
     class Meta:
         model = Medicine
@@ -70,6 +85,7 @@ class NurseResultMedicineSerializer(serializers.ModelSerializer):
 
 # -------  Add Medicines for all Nurses
 class AddAllNursesMedicineSerializer(serializers.ModelSerializer):
+    time_clock = Time12hSerializerField()
 
     class Meta:
         model = Medicine
