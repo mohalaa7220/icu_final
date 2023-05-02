@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import (AllNotifications, NotificationDetailView, NotificationHeadNursing,
-                    NotReadNotifications, CheckNotifications, AllNotificationPatient, AllPatients, PatientDetails)
+                    NotReadNotifications, CheckNotifications, AllNotificationPatient)
 
 urlpatterns = [
     path('', AllNotifications.as_view(), name='notifications'),
@@ -14,6 +14,5 @@ urlpatterns = [
 
     path('notifications_head_nursing/', NotificationHeadNursing.as_view(),
          name='notifications_head_nursing'),
-    path('all_patients/', AllPatients.as_view(), name='AllPatients'),
-    path('all_patients/<str:pk>', PatientDetails.as_view(), name='PatientDetails'),
+
 ]

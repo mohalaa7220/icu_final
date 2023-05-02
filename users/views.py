@@ -1,4 +1,4 @@
-from rest_framework import generics, status
+from rest_framework import generics, status, views
 from fcm_django.models import FCMDevice
 from django.db.models import Q
 from rest_framework.views import APIView
@@ -616,3 +616,27 @@ class PasswordView(APIView):
             for field_name, field_errors in serializer.errors.items():
                 new_error[field_name] = field_errors[0]
             return Response(new_error, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ----------------PatientAPI HeadNursing---------------
+class AllPatients(views.APIView):
+    def get(self, request):
+        search_term = self.request.query_params.get('name', None)
+
+        if search_term:
+            queryset = Patient.objects.filter(
+                name__icontains=search_term).prefetch_related('doctor__user', 'nurse__user').all()
+        else:
+            queryset = Patient.objects.prefetch_related(
+                'doctor__user', 'nurse__user').select_related('added_by').all()
+
+        serializer = PatientSerializer(queryset, many=True).data
+        return Response({"result": queryset.count(), 'data': serializer}, status=status.HTTP_200_OK)
+
+
+class PatientDetails(views.APIView):
+    def get(self, request, pk=None):
+        queryset = Patient.objects.prefetch_related(
+            'doctor__user', 'nurse__user').select_related('added_by').get(id=pk)
+        serializer = PatientSerializer(queryset).data
+        return Response(serializer, status=status.HTTP_200_OK)

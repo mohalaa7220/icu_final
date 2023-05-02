@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (SignUpAdminView, GetActiveAdminUser, SignUpUserView, Login, LogoutView,
                     LogoutView, LoginUser, AddDeleteNurseUser, NurseDoctor, DoctorNurse, AllDoctors, AllNurses,
                     GetPendingAdminUser, DetailsAdminUser, AccepterAdminUser, UserDetails, SignupPatients,
-                    Patients, PatientDetailsAPI, PatientDeleteUser, GetUsersPatient, GetRelatedUser,
+                    Patients, PatientDetailsAPI, PatientDeleteUser, GetUsersPatient, GetRelatedUser, AllPatients, PatientDetails,
                     PasswordResetView, VerifyOTP, PasswordView, DoctorsName, NursesName, PatientUser, PatientUserDetails, UpdateProfileAdmin
                     )
 
@@ -79,4 +79,8 @@ urlpatterns = [
     path("patient_user/", PatientUser.as_view(), name="patients_user"),
     path("patient_user/<str:pk>",
          PatientUserDetails.as_view(), name="patients_user"),
+
+    # ----------------PatientAPI HeadNursing---------------
+    path('all_patients/', AllPatients.as_view(), name='AllPatients'),
+    path('all_patients/<str:pk>', PatientDetails.as_view(), name='PatientDetails'),
 ]
