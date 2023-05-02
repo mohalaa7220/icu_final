@@ -89,6 +89,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.username
 
+    def save(self, *args, **kwargs):
+        self.gender = self.gender.lower()
+        self.status = self.status.lower()
+        self.role = self.role.lower()
+        super(User, self).save(*args, **kwargs)
+
 
 # Admin Class
 class Admin(models.Model):
@@ -162,3 +168,8 @@ class Patient(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        self.gender = self.gender.lower()
+        self.status = self.status.lower()
+        super(Patient, self).save(*args, **kwargs)

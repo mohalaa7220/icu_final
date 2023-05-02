@@ -50,7 +50,8 @@ class GetPendingAdminUser(generics.ListCreateAPIView):
 
     def get(self, request):
         queryset = User.objects.filter(is_active=False)
-        serializer = self.serializer_class(queryset, many=True).data
+        serializer = self.serializer_class(
+            queryset, many=True, context={'request': request}).data
         return Response(data={"result": len(serializer), "data": serializer}, status=status.HTTP_200_OK)
 
 
@@ -104,7 +105,8 @@ class GetActiveAdminUser(generics.ListCreateAPIView):
 
     def get(self, request):
         queryset = User.objects.filter(is_active=True, role='admin')
-        serializer = self.serializer_class(queryset, many=True).data
+        serializer = self.serializer_class(
+            queryset, many=True, context={'request': request}).data
         return Response(data={"result": len(serializer), "data": serializer}, status=status.HTTP_200_OK)
 
 
@@ -200,7 +202,8 @@ class LoginUser(generics.RetrieveUpdateAPIView):
     def get(self, request):
         user_id = request.user.id
         queryset = get_object_or_404(User, id=user_id)
-        user_serializer = self.serializer_class(queryset)
+        user_serializer = self.serializer_class(
+            queryset, context={'request': request})
         if user_serializer:
             return Response({"data": user_serializer.data}, status=status.HTTP_200_OK)
         else:
@@ -260,7 +263,8 @@ class NurseDoctor(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many=True)
+        serializer = self.serializer_class(
+            queryset, many=True, context={'request': request})
         data = {"result": len(queryset), "data": serializer.data}
         return Response(data, status=status.HTTP_200_OK)
 
@@ -283,7 +287,8 @@ class DoctorNurse(generics.ListCreateAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many=True)
+        serializer = self.serializer_class(
+            queryset, many=True, context={'request': request})
         data = {"result": len(queryset), "data": serializer.data}
         return Response(data, status=status.HTTP_200_OK)
 
@@ -302,7 +307,8 @@ class AllDoctors(generics.ListCreateAPIView):
         else:
             query = User.objects.select_related('added_by').filter(
                 Q(added_by=user) & Q(role='doctor'))
-        serializer = self.serializer_class(query, many=True).data
+        serializer = self.serializer_class(
+            query, many=True, context={'request': request}).data
         return Response({"result": query.count(), 'data': serializer}, status=status.HTTP_200_OK)
 
 
@@ -320,7 +326,8 @@ class AllNurses(generics.ListCreateAPIView):
         else:
             query = User.objects.select_related('added_by').filter(
                 Q(added_by=user) & Q(role='nurse'))
-        serializer = self.serializer_class(query, many=True).data
+        serializer = self.serializer_class(
+            query, many=True, context={'request': request}).data
         return Response({"result": query.count(), 'data': serializer}, status=status.HTTP_200_OK)
 
 
@@ -332,7 +339,7 @@ class UserDetails(generics.RetrieveUpdateDestroyAPIView):
 
     def get(self, request, pk=None):
         user = self.get_object()
-        serializer = self.serializer_class(user)
+        serializer = self.serializer_class(user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request,  pk=None):
@@ -344,7 +351,7 @@ class UserDetails(generics.RetrieveUpdateDestroyAPIView):
         result = serializer.save()
         response = {
             "message": "User Updated successfully",
-            "data": UserSerializer(result).data,
+            "data": UserSerializer(result, context={'request': request}).data,
         }
         return Response(data=response, status=status.HTTP_200_OK)
 
@@ -388,7 +395,8 @@ class Patients(generics.ListCreateAPIView):
             queryset = admin.added_admin.prefetch_related(
                 'doctor__user', 'nurse__user')
 
-        serializer = PatientSerializer(queryset, many=True).data
+        serializer = PatientSerializer(queryset, many=True, context={
+                                       'request': request}).data
         return Response({"result": queryset.count(), 'data': serializer}, status=status.HTTP_200_OK)
 
 
@@ -401,7 +409,8 @@ class PatientDetailsAPI(generics.RetrieveUpdateDestroyAPIView):
 
     def get(self, request, pk=None):
         queryset = self.get_object()
-        data = self.serializer_class(queryset).data
+        data = self.serializer_class(
+            queryset, context={'request': request}).data
         return Response(data=data, status=status.HTTP_200_OK)
 
     def put(self, request, pk=None):
@@ -414,7 +423,7 @@ class PatientDetailsAPI(generics.RetrieveUpdateDestroyAPIView):
             result = serializer.save()
             response = {
                 "message": "Patient Updated successfully",
-                "patient": self.serializer_class(result).data,
+                "patient": self.serializer_class(result, context={'request': request}).data,
             }
             return Response(data=response, status=status.HTTP_200_OK)
         else:
@@ -462,14 +471,16 @@ class GetUsersPatient(APIView):
             doctor = Doctor.objects.get(user=user)
             patients = Patient.objects.filter(
                 doctor=doctor).prefetch_related('nurse__user')
-            serializer = PatientDoctorsSerializer(patients, many=True)
+            serializer = PatientDoctorsSerializer(
+                patients, many=True, context={'request': request})
             return Response({"result": patients.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
         else:
             nurse = Nurse.objects.get(user=user)
             patients = Patient.objects.filter(
                 nurse=nurse).prefetch_related('doctor__user')
-            serializer = PatientNurseSerializer(patients, many=True)
+            serializer = PatientNurseSerializer(
+                patients, many=True, context={'request': request})
             return Response({"result": patients.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
 
@@ -484,7 +495,8 @@ class PatientUser(APIView):
             doctor = Doctor.objects.prefetch_related(
                 'doctor').select_related('user').get(user_id=user.id)
             patients = doctor.doctor.all()
-            serializer = PatientDoctorsSerializer(patients, many=True,)
+            serializer = PatientDoctorsSerializer(
+                patients, many=True, context={'request': request})
             return Response({"result": patients.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
         # --------------------------------
@@ -492,7 +504,8 @@ class PatientUser(APIView):
             nurse = Nurse.objects.prefetch_related(
                 'nurse').select_related('user').get(user_id=user.id)
             patients = nurse.nurse.all()
-            serializer = PatientNurseSerializer(patients, many=True)
+            serializer = PatientNurseSerializer(
+                patients, many=True, context={'request': request})
 
             return Response({"result": patients.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
@@ -506,11 +519,13 @@ class PatientUserDetails(APIView):
             'added_by').prefetch_related('doctor', 'nurse').get(id=pk)
 
         if user.role == 'doctor':
-            serializer = PatientDoctorsSerializer(queryset)
+            serializer = PatientDoctorsSerializer(
+                queryset, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         if user.role == 'nurse':
-            serializer = PatientNurseSerializer(queryset)
+            serializer = PatientNurseSerializer(
+                queryset, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -523,13 +538,15 @@ class GetRelatedUser(APIView):
         if user.role == 'doctor':
             doctor = get_object_or_404(Doctor, user__id=pk)
             nurses = doctor.nurse.all().select_related('user')
-            serializer = NurseSerializer(nurses, many=True)
+            serializer = NurseSerializer(
+                nurses, many=True, context={'request': request})
             count = nurses.count()
 
         elif user.role == 'nurse':
             nurse = get_object_or_404(Nurse, user__id=pk)
             doctors = nurse.doctor_nurse.all().select_related('user')
-            serializer = DoctorSerializer(doctors, many=True)
+            serializer = DoctorSerializer(
+                doctors, many=True, context={'request': request})
             count = doctors.count()
 
         return Response({"result": count, "data": serializer.data}, status=status.HTTP_200_OK)
@@ -630,7 +647,8 @@ class AllPatients(views.APIView):
             queryset = Patient.objects.prefetch_related(
                 'doctor__user', 'nurse__user').select_related('added_by').all()
 
-        serializer = PatientSerializer(queryset, many=True).data
+        serializer = PatientSerializer(queryset, many=True, context={
+                                       'request': request}).data
         return Response({"result": queryset.count(), 'data': serializer}, status=status.HTTP_200_OK)
 
 
@@ -638,5 +656,6 @@ class PatientDetails(views.APIView):
     def get(self, request, pk=None):
         queryset = Patient.objects.prefetch_related(
             'doctor__user', 'nurse__user').select_related('added_by').get(id=pk)
-        serializer = PatientSerializer(queryset).data
+        serializer = PatientSerializer(
+            queryset, context={'request': request}).data
         return Response(serializer, status=status.HTTP_200_OK)
