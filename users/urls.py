@@ -75,7 +75,7 @@ urlpatterns = [
     path("get_patients_user/<str:pk>",
          GetUsersPatient.as_view(), name="patients_user"),
 
-    # =================== Return Patient For one doctor or nurse (Login) =========
+    # =================== Return Patient For one doctor or nurse  =========
     path("patient_user/", PatientUser.as_view(), name="patients_user"),
     path("patient_user/<str:pk>",
          PatientUserDetails.as_view(), name="patients_user"),

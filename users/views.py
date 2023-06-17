@@ -1,6 +1,7 @@
 from rest_framework import generics, status, views
 from fcm_django.models import FCMDevice
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from .email_send import send_via_email, send_otp_via_email
@@ -490,23 +491,29 @@ class PatientUser(APIView):
 
     def get(self, request):
         user = request.user
+        role = user.role.lower()
+        search_name = request.query_params.get('name', None)
+
         # --------------------------------
-        if user.role == 'doctor' or user.role == 'Doctor':
-            doctor = Doctor.objects.prefetch_related(
-                'doctor').select_related('user').get(user_id=user.id)
-            patients = doctor.doctor.all()
+        if role == 'doctor':
+            doctor = get_object_or_404(
+                Doctor.objects.select_related('user'), user_id=user.id)
+            patients = doctor.doctor.prefetch_related('nurse__user').all()
+            if search_name:
+                patients = patients.filter(name__icontains=search_name)
             serializer = PatientDoctorsSerializer(
                 patients, many=True, context={'request': request})
             return Response({"result": patients.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
         # --------------------------------
-        elif user.role == 'nurse' or user.role == 'Nurse':
-            nurse = Nurse.objects.prefetch_related(
-                'nurse').select_related('user').get(user_id=user.id)
-            patients = nurse.nurse.all()
+        elif user.role == 'nurse':
+            nurse = get_object_or_404(
+                Nurse.objects.select_related('user'), user_id=user.id)
+            patients = nurse.nurse.prefetch_related('doctor__user').all()
+            if search_name:
+                patients = patients.filter(name__icontains=search_name)
             serializer = PatientNurseSerializer(
                 patients, many=True, context={'request': request})
-
             return Response({"result": patients.count(), "data": serializer.data}, status=status.HTTP_200_OK)
 
 
