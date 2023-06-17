@@ -116,6 +116,16 @@ class SignUpUserSerializer(serializers.ModelSerializer):
         elif validated_data['role'] == 'nurse':
             validated_data['is_nurse'] = True
 
+        elif validated_data['role'] == 'headnursing':
+            existing_headnursing = User.objects.filter(
+                is_headnursing=True).first()
+
+            if existing_headnursing:
+                raise ValidationError(
+                    {"message": "Only one head nursing account is allowed."})
+
+            validated_data['is_headnursing'] = True
+
         user = super().create(validated_data)
         user.set_password(password)
 
@@ -126,6 +136,7 @@ class SignUpUserSerializer(serializers.ModelSerializer):
         if user.is_nurse == True:
             Nurse.objects.create(user=user)
             user.save()
+
         user.save()
         return user
 

@@ -74,6 +74,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_doctor = models.BooleanField(default=False)
     is_nurse = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
+    is_headnursing = models.BooleanField(default=False)
 
     objects = CustomUserManager()
 
