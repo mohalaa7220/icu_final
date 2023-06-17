@@ -4,6 +4,8 @@ import dj_database_url
 import firebase_admin
 from firebase_admin import credentials
 import os
+import cloudinary
+
 
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate(
@@ -201,3 +203,11 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 STATIC_URL = '/static/'
+
+
+cloudinary.config(
+    cloud_name="dvm8x5hoj",
+    api_key="822426192475865",
+    api_secret="uHIZLfwelTRkUURkYrjBp-No7_c",
+    secure=True
+)

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import MedicalTest, Nurse, PatientMedicalImage, PatientRaysImage
 from users.serializer import UsersPatientSerializer
+from django.core.exceptions import ValidationError
 
 
 class DoctorMedicalSerializer(serializers.ModelSerializer):
@@ -31,12 +32,23 @@ class ResultPatientMedicalSerializer(serializers.ModelSerializer):
 
 
 class PatientMedicalImageSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = PatientMedicalImage
-        fields = ['id', 'image', 'created']
+        fields = ['id', 'image_url', "image", 'created']
+
+    def validate(self, attrs):
+        if not attrs.get('image'):
+            raise ValidationError({"message": "Image is required"})
+        return super().validate(attrs)
 
 
 class PatientRaysImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PatientRaysImage
-        fields = ['id', 'image', 'created']
+        fields = ['id', 'image_url', "image", 'created']
+
+    def validate(self, attrs):
+        if not attrs.get('image'):
+            raise ValidationError({"message": "Image is required"})
+        return super().validate(attrs)

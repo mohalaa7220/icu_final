@@ -652,7 +652,7 @@ class AllPatients(views.APIView):
                 name__icontains=search_term).prefetch_related('doctor__user', 'nurse__user').all()
         else:
             queryset = Patient.objects.prefetch_related(
-                'doctor__user', 'nurse__user').select_related('added_by').all()
+                'doctor__user', 'nurse__user').select_related('added_by__user').all()
 
         serializer = PatientSerializer(queryset, many=True, context={
                                        'request': request}).data
@@ -661,8 +661,8 @@ class AllPatients(views.APIView):
 
 class PatientDetails(views.APIView):
     def get(self, request, pk=None):
-        queryset = Patient.objects.prefetch_related(
-            'doctor__user', 'nurse__user').select_related('added_by').get(id=pk)
+        queryset = get_object_or_404(Patient.objects.prefetch_related(
+            'doctor__user', 'nurse__user').select_related('added_by'), id=pk)
         serializer = PatientSerializer(
             queryset, context={'request': request}).data
         return Response(serializer, status=status.HTTP_200_OK)
