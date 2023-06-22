@@ -2,7 +2,8 @@ from rest_framework import generics, views
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Doctor, Patient, MedicalTest, Image
-from .serializer import (DoctorMedicalSerializer, ResultDoctorMedicalSerializer, ImageSerializer, AddImageSerializer,
+from .serializer import (DoctorMedicalSerializer, ResultDoctorMedicalSerializer, AddPatientMedicalImageSerializer,
+                         ImageSerializer, AddImageSerializer, AddPatientRaysImageSerializer,
                          ResultPatientMedicalSerializer, PatientMedicalImageSerializer, PatientRaysImageSerializer)
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsDoctor
@@ -76,7 +77,10 @@ class AddPatientMedicalImage(generics.ListCreateAPIView):
     def post(self, request, pk=None):
         patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
         doctors = patient.doctor.select_related('user').all()
-        serializer = self.serializer_class(data=request.data)
+        images = request.data.get('images', [])
+        if not images:
+            return Response({"message": "at least add one image"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = AddPatientMedicalImageSerializer(data=request.data)
         doctor_devices = {}
         for doctor_id in doctors:
             devices = FCMDevice.objects.filter(user=doctor_id.user)
@@ -110,7 +114,10 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
     def post(self, request, pk=None):
         patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
         doctors = patient.doctor.select_related('user').all()
-        serializer = self.serializer_class(data=request.data)
+        images = request.data.get('images', [])
+        if not images:
+            return Response({"message": "at least add one image"}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = AddPatientRaysImageSerializer(data=request.data)
         doctor_devices = {}
         for doctor_id in doctors:
             devices = FCMDevice.objects.filter(user=doctor_id.user)

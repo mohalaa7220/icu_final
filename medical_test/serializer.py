@@ -31,27 +31,44 @@ class ResultPatientMedicalSerializer(serializers.ModelSerializer):
                   'patient', 'created', 'updated']
 
 
-class PatientMedicalImageSerializer(serializers.ModelSerializer):
+class AddPatientMedicalImageSerializer(serializers.ModelSerializer):
+    images = serializers.ListField(child=serializers.ImageField())
 
     class Meta:
         model = PatientMedicalImage
-        fields = ['id', 'image_url', "image", 'created']
+        fields = ["images", 'name']
 
-    def validate(self, attrs):
-        if not attrs.get('image'):
-            raise ValidationError({"message": "Image is required"})
-        return super().validate(attrs)
+
+class PatientMedicalImageSerializer(serializers.ModelSerializer):
+    images_url = serializers.SerializerMethodField(source='url')
+    patient = serializers.StringRelatedField()
+
+    class Meta:
+        model = PatientMedicalImage
+        fields = ['id', "images_url", 'name', 'patient']
+
+    def get_images_url(self, instance):
+        return eval(instance.url) if instance.url else []
+
+
+class AddPatientRaysImageSerializer(serializers.ModelSerializer):
+    images = serializers.ListField(child=serializers.ImageField())
+
+    class Meta:
+        model = PatientRaysImage
+        fields = ["images", 'name']
 
 
 class PatientRaysImageSerializer(serializers.ModelSerializer):
+    images_url = serializers.SerializerMethodField(source='url')
+    patient = serializers.StringRelatedField()
+
     class Meta:
         model = PatientRaysImage
-        fields = ['id', 'image_url', "image", 'created']
+        fields = ['id', "images_url", 'name', 'patient']
 
-    def validate(self, attrs):
-        if not attrs.get('image'):
-            raise ValidationError({"message": "Image is required"})
-        return super().validate(attrs)
+    def get_images_url(self, instance):
+        return eval(instance.url) if instance.url else []
 
 
 class AddImageSerializer(serializers.ModelSerializer):

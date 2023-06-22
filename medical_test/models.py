@@ -28,8 +28,10 @@ class MedicalTest(models.Model):
 
 
 class PatientMedicalImage(models.Model):
-    image = models.ImageField(upload_to=upload_to, null=True, blank=True)
-    image_url = models.URLField(blank=True)
+    name = models.CharField(max_length=220, null=True, blank=True)
+    images = ArrayField(models.CharField(
+        max_length=255), blank=True, null=True)
+    url = models.URLField(blank=True)
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name='patient_medical_image', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True, null=True)
@@ -38,9 +40,12 @@ class PatientMedicalImage(models.Model):
         return self.patient.name
 
     def save(self, *args, **kwargs):
-        if self.image:
-            response = cloudinary.uploader.upload(self.image)
-            self.image_url = response['url']
+        if self.images:
+            urls = []
+            for image_data in self.images:
+                response = cloudinary.uploader.upload(image_data)
+                urls.append(response['url'])
+            self.url = urls
         super().save(*args, **kwargs)
 
     class Meta:
@@ -48,8 +53,10 @@ class PatientMedicalImage(models.Model):
 
 
 class PatientRaysImage(models.Model):
-    image = models.ImageField(upload_to=upload_to, null=True, blank=True)
-    image_url = models.URLField(blank=True)
+    name = models.CharField(max_length=220, null=True, blank=True)
+    images = ArrayField(models.CharField(
+        max_length=255), blank=True, null=True)
+    url = models.URLField(blank=True)
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name='patient_rays_image', blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -59,9 +66,12 @@ class PatientRaysImage(models.Model):
         return self.patient.name
 
     def save(self, *args, **kwargs):
-        if self.image:
-            response = cloudinary.uploader.upload(self.image)
-            self.image_url = response['url']
+        if self.images:
+            urls = []
+            for image_data in self.images:
+                response = cloudinary.uploader.upload(image_data)
+                urls.append(response['url'])
+            self.url = urls
         super().save(*args, **kwargs)
 
     class Meta:
