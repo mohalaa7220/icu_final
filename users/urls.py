@@ -49,7 +49,7 @@ urlpatterns = [
     # Return All Nurses
     path("nurses", AllNurses.as_view(), name="nurses"),
 
-    # Return All HeadNurses
+    # Return All Head Nurses
     path("headnursing", AllHeaderNUrsing.as_view(), name="headnursing"),
 
     # User Details
