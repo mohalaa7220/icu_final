@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (SignUpAdminView, GetActiveAdminUser, SignUpUserView, Login, LogoutView,
                     LogoutView, LoginUser, AddDeleteNurseUser, NurseDoctor, DoctorNurse, AllDoctors, AllNurses,
-                    GetPendingAdminUser, DetailsAdminUser, AccepterAdminUser, UserDetails, SignupPatients,
+                    GetPendingAdminUser, DetailsAdminUser, AccepterAdminUser, UserDetails, SignupPatients, AllHeaderNUrsing,
                     Patients, PatientDetailsAPI, PatientDeleteUser, GetUsersPatient, GetRelatedUser, AllPatients, PatientDetails,
                     PasswordResetView, VerifyOTP, PasswordView, DoctorsName, NursesName, PatientUser, PatientUserDetails, UpdateProfileAdmin
                     )
@@ -48,6 +48,9 @@ urlpatterns = [
 
     # Return All Nurses
     path("nurses", AllNurses.as_view(), name="nurses"),
+
+    # Return All HeadNurses
+    path("headnursing", AllHeaderNUrsing.as_view(), name="headnursing"),
 
     # User Details
     path("user/<str:pk>", UserDetails.as_view(), name="user_detail"),

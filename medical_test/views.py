@@ -1,8 +1,8 @@
 from rest_framework import generics, views
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Doctor, Patient, MedicalTest
-from .serializer import (DoctorMedicalSerializer, ResultDoctorMedicalSerializer,
+from .models import Doctor, Patient, MedicalTest, Image
+from .serializer import (DoctorMedicalSerializer, ResultDoctorMedicalSerializer, ImageSerializer, AddImageSerializer,
                          ResultPatientMedicalSerializer, PatientMedicalImageSerializer, PatientRaysImageSerializer)
 from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsDoctor
@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from project.serializer_error import serializer_error
 from project.notify_global import send_notification
 from fcm_django.models import FCMDevice
+from rest_framework.parsers import MultiPartParser
 
 
 # ====================== Doctor =======================================
@@ -131,3 +132,18 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
         serializer = self.serializer_class(
             patient_medical_image, many=True, context={'request': request}).data
         return Response({'data': serializer}, status=status.HTTP_200_OK)
+
+
+class ImageUploadView(generics.ListCreateAPIView):
+    serializer_class = ImageSerializer
+    queryset = Image.objects.all().order_by('-id')
+
+    def post(self, request):
+        images = request.data.get('images', [])
+        if not images:
+            return Response({"message": "at least add one image"}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = AddImageSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Upload Successfully"}, status=status.HTTP_200_OK)

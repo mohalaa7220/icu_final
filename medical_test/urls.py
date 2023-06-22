@@ -1,6 +1,6 @@
 
 from django.urls import path
-from .views import AddDoctorMedical, PatientMedical, DetailsMedical, AddPatientMedicalImage, AddPatientRaysImage
+from .views import ImageUploadView, AddDoctorMedical, PatientMedical, DetailsMedical, AddPatientMedicalImage, AddPatientRaysImage
 
 urlpatterns = [
     path('', AddDoctorMedical.as_view(), name='doctor_medical'),
@@ -11,4 +11,6 @@ urlpatterns = [
          AddPatientMedicalImage.as_view(), name='AddPatientMedicalImage'),
     path('patient/<str:pk>/rays_image',
          AddPatientRaysImage.as_view(), name='AddPatientRaysImage'),
+
+    path('multi_images/', ImageUploadView.as_view(), name='image-create'),
 ]

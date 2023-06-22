@@ -332,6 +332,25 @@ class AllNurses(generics.ListCreateAPIView):
         return Response({"result": query.count(), 'data': serializer}, status=status.HTTP_200_OK)
 
 
+# -------- Get HeaderNUrsing
+class AllHeaderNUrsing(generics.ListCreateAPIView):
+    permission_classes = [IsAdminRole, IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get(self, request):
+        user = self.request.user
+        name = request.query_params.get('name', None)
+        if name:
+            query = User.objects.select_related('added_by').filter(
+                Q(added_by=user) & Q(role='headnursing') & Q(name__icontains=name))
+        else:
+            query = User.objects.select_related('added_by').filter(
+                Q(added_by=user) & Q(role='headnursing'))
+        serializer = self.serializer_class(
+            query, many=True, context={'request': request}).data
+        return Response({"result": query.count(), 'data': serializer}, status=status.HTTP_200_OK)
+
+
 # -------- Get Only Users (Updated Delete)
 class UserDetails(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsAdminRole]

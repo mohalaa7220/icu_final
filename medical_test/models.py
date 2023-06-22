@@ -1,6 +1,7 @@
 from django.db import models
 from users.models import Doctor, Nurse, Patient
 import cloudinary.uploader
+from django.contrib.postgres.fields import ArrayField
 
 
 def upload_to(instance, filename):
@@ -65,3 +66,21 @@ class PatientRaysImage(models.Model):
 
     class Meta:
         ordering = ('-created',)
+
+
+class Image(models.Model):
+    images = ArrayField(models.CharField(
+        max_length=255), blank=True, null=True)
+    url = models.URLField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Image {self.id}"
+
+    def save(self, *args, **kwargs):
+        if self.images:
+            urls = []
+            for image_data in self.images:
+                response = cloudinary.uploader.upload(image_data)
+                urls.append(response['url'])
+            self.url = urls
+        super().save(*args, **kwargs)
