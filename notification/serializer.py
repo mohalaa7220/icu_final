@@ -1,10 +1,11 @@
 from rest_framework import serializers
 from .models import NotificationApp
+from users.serializer import SimplePatientData, SimpleUserData
 
 
 class NotificationSerializer(serializers.ModelSerializer):
-    user_sender = serializers.StringRelatedField()
-    patient = serializers.StringRelatedField()
+    user_sender = SimpleUserData(read_only=True)
+    patient = SimplePatientData(read_only=True)
 
     class Meta:
         model = NotificationApp
@@ -12,9 +13,9 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 
 class NotificationHeadNursingSerializer(serializers.ModelSerializer):
-    user_sender = serializers.StringRelatedField()
-    user_receiver = serializers.StringRelatedField()
-    patient = serializers.StringRelatedField()
+    user_sender = SimpleUserData(read_only=True)
+    user_receiver = SimpleUserData(read_only=True)
+    patient = SimplePatientData(read_only=True)
 
     class Meta:
         model = NotificationApp

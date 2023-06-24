@@ -6,9 +6,8 @@ from .models import NotificationApp, Patient
 from users.serializer import PatientSerializer
 from django.db.models import Q
 
+
 # AllNotifications
-
-
 class AllNotifications(views.APIView):
     permission_classes = [IsAuthenticated]
 

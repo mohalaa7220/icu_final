@@ -41,6 +41,13 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "name", "phone"]
 
 
+class SimpleUserData(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ["id", "role", "name"]
+
+
 # --------- SignUp Admin Serializer
 class SignUpAdminSerializer(serializers.ModelSerializer):
     password = serializers.CharField(min_length=8, write_only=True)
@@ -289,6 +296,12 @@ class PatientDoctorsSerializer(serializers.ModelSerializer):
         model = Patient
         fields = ['id', 'name', 'image', 'disease_type', 'room_number', 'address',
                   'phone',  'age', 'status', 'user']
+
+
+class SimplePatientData(serializers.ModelSerializer):
+    class Meta:
+        model = Patient
+        fields = ['id', 'name', 'disease_type', 'room_number', 'status']
 
 
 # ----- Return Patient for doctor and nurse
