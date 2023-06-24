@@ -146,7 +146,7 @@ class Login(ObtainAuthToken):
         email = User.objects.filter(email=data.get('username'))
         device_token = request.data.get("device_token")
         if not device_token:
-            return Response(data={"message": "device_token is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "device_token is required"}, status=status.HTTP_400_BAD_REQUEST)
         if email.exists() and email.get().is_active == True:
             serializer.is_valid(raise_exception=True)
             user = serializer.validated_data['user']

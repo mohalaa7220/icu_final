@@ -5,11 +5,12 @@ from users.serializer import SimplePatientData, SimpleUserData
 
 class NotificationSerializer(serializers.ModelSerializer):
     user_sender = SimpleUserData(read_only=True)
+    user_receiver = SimpleUserData(read_only=True)
     patient = SimplePatientData(read_only=True)
 
     class Meta:
         model = NotificationApp
-        exclude = ('user_receiver',)
+        fields = "__all__"
 
 
 class NotificationHeadNursingSerializer(serializers.ModelSerializer):
