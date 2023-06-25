@@ -5,7 +5,7 @@ from users.serializer import SimplePatientData, SimpleUserData
 
 class NotificationSerializer(serializers.ModelSerializer):
     user_sender = SimpleUserData(read_only=True)
-    user_receiver = SimpleUserData(read_only=True)
+    user_receiver = SimpleUserData(read_only=True, many=True)
     patient = SimplePatientData(read_only=True)
 
     class Meta:
@@ -15,7 +15,7 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 class NotificationHeadNursingSerializer(serializers.ModelSerializer):
     user_sender = SimpleUserData(read_only=True)
-    user_receiver = SimpleUserData(read_only=True)
+    user_receiver = SimpleUserData(read_only=True, many=True)
     patient = SimplePatientData(read_only=True)
 
     class Meta:

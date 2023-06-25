@@ -9,48 +9,49 @@ logger = logging.getLogger(__name__)
 
 def send_notification(patient, user, device_token, title='', user_sender=''):
     headnursing_users = User.objects.filter(role='headnursing')
-
     device_headnursing_users = FCMDevice.objects.filter(
         user__in=headnursing_users)
 
     devices = FCMDevice.objects.filter(
-        registration_id=device_token, active=True)
+        registration_id=device_token, active=True, user=user)
 
-    user_devices = devices.filter(user=user)
-
-    if not user_devices.exists():
+    if not devices.exists():
         logger.warning('User is not associated with device token')
         return
 
-    registration_tokens = []
-
-    # Loop through the devices associated with head nursing colleagues
-    for device in device_headnursing_users:
-        registration_tokens.append(device.registration_id)
-
-    # Loop through the devices associated with the user
-    for device in user_devices:
-        registration_tokens.append(device.registration_id)
+    registration_tokens = list(
+        device_headnursing_users.values_list('registration_id', flat=True))
+    registration_tokens.extend(
+        devices.values_list('registration_id', flat=True))
 
     message = messaging.MulticastMessage(
         notification=messaging.Notification(
-            title=title, body=f"{title} for Patient ({patient.name}) in room number {patient.room_number}"),
+            title=title,
+            body=f"{title} for Patient ({patient.name}) in room number {patient.room_number}"
+        ),
         tokens=registration_tokens,
     )
 
-    users = [device.user for device in devices]
+    users = devices.values_list('user', flat=True)
 
     response = messaging.send_multicast(message)
+
+    notifications = [
+        NotificationApp(
+            patient=patient,
+            title=title,
+            message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
+            user_sender=user_sender
+        ) for user_id in users
+    ]
+
+    NotificationApp.objects.bulk_create(notifications)
+
+    for notification, user_id in zip(notifications, users):
+        notification.user_receiver.set([user_id])
+
     for i, result in enumerate(response.responses):
         if result.success:
-            for user in users:
-                NotificationApp.objects.create(
-                    patient=patient,
-                    title=title,
-                    message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
-                    user_receiver=user,
-                    user_sender=user_sender
-                )
             print(f'Message sent to device {i}')
         else:
             device = devices[i]

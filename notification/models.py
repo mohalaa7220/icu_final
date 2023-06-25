@@ -7,8 +7,8 @@ from users.models import User, Patient
 class NotificationApp(models.Model):
     user_sender = models.ForeignKey(
         User, null=True, blank=True, related_name='user_sender', on_delete=models.CASCADE)
-    user_receiver = models.ForeignKey(
-        User, null=True, blank=True, related_name='user_receiver', on_delete=models.CASCADE)
+    user_receiver = models.ManyToManyField(
+        User, blank=True, related_name='user_receiver')
     patient = models.ForeignKey(
         Patient, null=True, blank=True, related_name='patient_notification', on_delete=models.CASCADE)
     status = models.BooleanField(default=False)
