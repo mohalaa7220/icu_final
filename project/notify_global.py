@@ -97,11 +97,15 @@ def send_notification_headnursing(patient, title='', user_sender=''):
                 patient=patient,
                 title=title,
                 message=f"{title} for Patient ({patient.name}) in room number {patient.room_number}",
-                user_receiver=user,
                 user_sender=user_sender
-            ) for user in users
+            ) for user_id in users
         ]
-        NotificationApp.objects.bulk_create(notifications)
+
+    NotificationApp.objects.bulk_create(notifications)
+
+    for notification, user_id in zip(notifications, users):
+        notification.user_receiver.set([user_id])
+
         print(f"{successes} message(s) sent to devices.")
 
     if failures > 0:
