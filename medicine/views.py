@@ -7,7 +7,7 @@ from .serializer import (MedicinesSerializer, AddMedicineSerializer, NurseResult
 from users.models import Nurse, Patient, User
 from users.permissions import IsDoctor, IsNurse
 from django.shortcuts import get_object_or_404
-from project.notify_global import send_notification
+from project.notify_global import send_notification, send_notification_headnursing
 from fcm_django.models import FCMDevice
 from project.serializer_error import serializer_error
 from datetime import datetime
@@ -129,10 +129,15 @@ class AddMedicineAllNurses(views.APIView):
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
-            for device_token, nurse_id in nurse_devices.items():
-                print(nurse_id)
-                send_notification(
-                    patient, nurse_id, device_token, 'Medicines Added', self.request.user)
+            if not bool(nurse_devices):
+                print("The dictionary is empty.")
+                send_notification_headnursing(
+                    patient, 'Medicines Added', self.request.user)
+            else:
+                print("The dictionary is not empty.")
+                for device_token, nurse_id in nurse_devices.items():
+                    send_notification(
+                        patient, nurse_id, device_token, 'Medicines Added', self.request.user)
             serializer.save(doctor=doctor_added, nurse=nurses)
             return Response(data={"message": "Medicine Added successfully"}, status=status.HTTP_201_CREATED)
         else:

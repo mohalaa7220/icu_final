@@ -10,9 +10,9 @@ from users.permissions import IsDoctor
 from users.models import User
 from django.shortcuts import get_object_or_404
 from project.serializer_error import serializer_error
-from project.notify_global import send_notification
+from project.notify_global import send_notification, send_notification_headnursing
 from fcm_django.models import FCMDevice
-from rest_framework.parsers import MultiPartParser
+from users.permissions import IsNurse, IsHeadNursing
 
 
 # ====================== Doctor =======================================
@@ -35,9 +35,15 @@ class AddDoctorMedical(views.APIView):
                 nurse_devices[device.registration_id] = nurse_id.user
 
         if serializer.is_valid():
-            for device_token, nurse_id in nurse_devices.items():
-                send_notification(
-                    patient, nurse_id, device_token, 'Medical Test Added', self.request.user)
+            if not bool(nurse_devices):
+                print("The dictionary is empty.")
+                send_notification_headnursing(
+                    patient, 'Medical Test Added', self.request.user)
+            else:
+                print("The dictionary is not empty.")
+                for device_token, nurse_id in nurse_devices.items():
+                    send_notification(
+                        patient, nurse_id, device_token, 'Medical Test Added', self.request.user)
             serializer.save(doctor=doctor, nurse=nurses)
             return Response(data={"message": "Medical Test Added"}, status=status.HTTP_201_CREATED)
         else:
@@ -75,7 +81,7 @@ class AddPatientMedicalImage(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk=None):
-        patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
+        patient = get_object_or_404(Patient, pk=request.data.get('patient'))
         doctors = patient.doctor.select_related('user').all()
         images = request.data.get('images', [])
         if not images:
@@ -87,10 +93,16 @@ class AddPatientMedicalImage(generics.ListCreateAPIView):
             for device in devices:
                 doctor_devices[device.registration_id] = doctor_id.user
         if serializer.is_valid():
-            for device_token, doctor in doctor_devices.items():
-                send_notification(patient, doctor, device_token,
-                                  'Image  Medical Test Upload', self.request.user)
-            serializer.save(patient=patient)
+            if not bool(doctor_devices):
+                print("The dictionary is  empty.")
+                send_notification_headnursing(
+                    patient, 'Image  Medical Test Upload', self.request.user)
+            else:
+                print("The dictionary is not empty.")
+                for device_token, doctor in doctor_devices.items():
+                    send_notification(patient, doctor, device_token,
+                                      'Image  Medical Test Upload', self.request.user)
+            serializer.save()
             return Response({'message': 'Image  Medical Test added successfully'}, status=status.HTTP_200_OK)
         else:
             return serializer_error(serializer)
@@ -112,7 +124,7 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk=None):
-        patient = get_object_or_404(Patient, pk=self.kwargs['pk'])
+        patient = get_object_or_404(Patient, pk=request.data.get('patient'))
         doctors = patient.doctor.select_related('user').all()
         images = request.data.get('images', [])
         if not images:
@@ -124,10 +136,16 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
             for device in devices:
                 doctor_devices[device.registration_id] = doctor_id.user
         if serializer.is_valid():
-            for device_token, doctor in doctor_devices.items():
-                send_notification(
-                    patient, doctor, device_token, 'Image Rays Upload', self.request.user)
-            serializer.save(patient=patient)
+            if not bool(doctor_devices):
+                print("The dictionary is  empty.")
+                send_notification_headnursing(
+                    patient, 'Image Rays Upload', self.request.user)
+            else:
+                print("The dictionary is not empty.")
+                for device_token, doctor in doctor_devices.items():
+                    send_notification(
+                        patient, doctor, device_token, 'Image Rays Upload', self.request.user)
+            serializer.save()
             return Response({'message': 'Image Rays added successfully'}, status=status.HTTP_200_OK)
 
         else:

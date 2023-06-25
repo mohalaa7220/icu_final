@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from users.permissions import IsDoctor
 from django.shortcuts import get_object_or_404
 from project.serializer_error import serializer_error
-from project.notify_global import send_notification
+from project.notify_global import send_notification, send_notification_headnursing
 from fcm_django.models import FCMDevice
 
 
@@ -32,9 +32,15 @@ class AddDoctorRays(generics.ListCreateAPIView):
                 nurse_devices[device.registration_id] = nurse_id.user
 
         if serializer.is_valid():
-            for device_token, nurse_id in nurse_devices.items():
-                send_notification(
-                    patient, nurse_id, device_token, 'Rays Added', self.request.user)
+            if not bool(nurse_devices):
+                print("The dictionary is empty.")
+                send_notification_headnursing(
+                    patient, 'Rays Added', self.request.user)
+            else:
+                print("The dictionary is not empty.")
+                for device_token, nurse_id in nurse_devices.items():
+                    send_notification(
+                        patient, nurse_id, device_token, 'Rays Added', self.request.user)
             serializer.save(doctor=doctor, nurse=nurses)
             return Response(data={"message": "Rays Added successfully"}, status=status.HTTP_201_CREATED)
         else:

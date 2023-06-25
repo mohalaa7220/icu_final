@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import MedicalTest, Nurse, PatientMedicalImage, PatientRaysImage, Image
 from users.serializer import UsersPatientSerializer
-from django.core.exceptions import ValidationError
 
 
 class DoctorMedicalSerializer(serializers.ModelSerializer):
@@ -36,7 +35,7 @@ class AddPatientMedicalImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PatientMedicalImage
-        fields = ["images", 'name']
+        fields = ["images", 'name', 'patient']
 
 
 class PatientMedicalImageSerializer(serializers.ModelSerializer):
@@ -56,7 +55,7 @@ class AddPatientRaysImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PatientRaysImage
-        fields = ["images", 'name']
+        fields = ["images", 'name', 'patient']
 
 
 class PatientRaysImageSerializer(serializers.ModelSerializer):

@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from users.models import (Nurse, Patient, Doctor, User)
 from users.permissions import IsDoctor, IsNurse
 from django.db.models import Prefetch
-from project.notify_global import send_notification
+from project.notify_global import send_notification, send_notification_headnursing
 from django.shortcuts import get_object_or_404
 from fcm_django.models import FCMDevice
 from project.serializer_error import serializer_error
@@ -264,10 +264,15 @@ class AddDoctorReportForAllNurse(views.APIView):
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
-
-            for device_token, nurse_id in nurse_devices.items():
-                send_notification(
-                    patient, nurse_id, device_token, 'Report Added', self.request.user)
+            if not bool(nurse_devices):
+                print("The dictionary is empty.")
+                send_notification_headnursing(
+                    patient, 'Report Added', self.request.user)
+            else:
+                print("The dictionary is not empty.")
+                for device_token, nurse_id in nurse_devices.items():
+                    send_notification(
+                        patient, nurse_id, device_token, 'Report Added', self.request.user)
 
             serializer.save(added_by=doctor, nurse=nurses)
             return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
@@ -294,11 +299,16 @@ class AddNurseReportForAllDoctors(views.APIView):
         serializer = self.serializer_class(data=data)
 
         if serializer.is_valid():
-            for device_token, doctor in doctor_devices.items():
-                print(device_token)
-                send_notification(
-                    patient, doctor, device_token, 'Report Added', self.request.user)
+            if not bool(doctor_devices):
+                print("The dictionary is empty.")
+                send_notification_headnursing(
+                    patient, 'Report Added', self.request.user)
+            else:
+                print("The dictionary is not empty.")
+                for device_token, doctor in doctor_devices.items():
+                    send_notification(
+                        patient, doctor, device_token, 'Report Added', self.request.user)
             serializer.save(added_by=nurse, doctor=doctors)
-            return Response(data={"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
+            return Response({"message": "Report Created successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
