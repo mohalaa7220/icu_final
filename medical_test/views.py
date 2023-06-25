@@ -124,20 +124,26 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk=None):
-        patient = get_object_or_404(Patient, pk=request.data.get('patient'))
-        doctors = patient.doctor.select_related('user').all()
+        patient_id = request.data.get('patient')
         images = request.data.get('images', [])
+
         if not images:
-            return Response({"message": "at least add one image"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Please add at least one image"}, status=status.HTTP_400_BAD_REQUEST)
+
+        patient = get_object_or_404(Patient, pk=patient_id)
+        doctors = patient.doctor.select_related('user').all()
+
         serializer = AddPatientRaysImageSerializer(data=request.data)
+
         doctor_devices = {}
-        for doctor_id in doctors:
-            devices = FCMDevice.objects.filter(user=doctor_id.user)
+        for doctor in doctors:
+            devices = FCMDevice.objects.filter(user=doctor.user)
             for device in devices:
-                doctor_devices[device.registration_id] = doctor_id.user
+                doctor_devices[device.registration_id] = doctor.user
+
         if serializer.is_valid():
-            if not bool(doctor_devices):
-                print("The dictionary is  empty.")
+            if not doctor_devices:
+                print("The dictionary is empty.")
                 send_notification_headnursing(
                     patient, 'Image Rays Upload', self.request.user)
             else:
@@ -145,9 +151,9 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
                 for device_token, doctor in doctor_devices.items():
                     send_notification(
                         patient, doctor, device_token, 'Image Rays Upload', self.request.user)
+
             serializer.save()
             return Response({'message': 'Image Rays added successfully'}, status=status.HTTP_200_OK)
-
         else:
             return serializer_error(serializer)
 

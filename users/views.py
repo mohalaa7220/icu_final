@@ -225,11 +225,10 @@ class AddDeleteNurseUser(generics.RetrieveUpdateDestroyAPIView):
         doctor_instance = get_object_or_404(
             Doctor.objects.select_related('user'), user=doctor)
         if serializer.is_valid():
-            for nurse_id in nurses_ids:
-                nurse_instance = get_object_or_404(
-                    Nurse.objects.select_related('user'), user_id=nurse_id)
-                doctor_instance.nurse.add(nurse_instance)
-                doctor_instance.save()
+            nurse_instances = Nurse.objects.select_related(
+                'user').filter(user_id__in=nurses_ids)
+            doctor_instance.nurse.add(*nurse_instances)
+            doctor_instance.save()
             return Response({"message": "Nurse Added successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)
