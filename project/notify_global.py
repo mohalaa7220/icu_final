@@ -101,7 +101,7 @@ def send_notification_headnursing(patient, title='', user_sender=''):
             ) for user_id in users
         ]
 
-    NotificationApp.objects.bulk_create(notifications)
+        NotificationApp.objects.bulk_create(notifications)
 
     for notification, user_id in zip(notifications, users):
         notification.user_receiver.set([user_id])

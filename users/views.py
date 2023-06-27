@@ -533,6 +533,8 @@ class PatientUser(APIView):
             serializer = PatientNurseSerializer(
                 patients, many=True, context={'request': request})
             return Response({"result": patients.count(), "data": serializer.data}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": 'Invalid role'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PatientUserDetails(APIView):
