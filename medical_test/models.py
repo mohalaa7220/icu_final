@@ -30,7 +30,7 @@ class MedicalTest(models.Model):
 class PatientMedicalImage(models.Model):
     name = models.CharField(max_length=220, null=True, blank=True)
     images = ArrayField(models.CharField(
-        max_length=255), blank=True, null=True)
+        max_length=20000), blank=True, null=True)
     url = models.URLField(blank=True)
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name='patient_medical_image', blank=True, null=True)
@@ -55,7 +55,7 @@ class PatientMedicalImage(models.Model):
 class PatientRaysImage(models.Model):
     name = models.CharField(max_length=220, null=True, blank=True)
     images = ArrayField(models.CharField(
-        max_length=255), blank=True, null=True)
+        max_length=20000), blank=True, null=True)
     url = models.URLField(blank=True)
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name='patient_rays_image', blank=True, null=True)
