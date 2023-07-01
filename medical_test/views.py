@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404
 from project.serializer_error import serializer_error
 from project.notify_global import send_notification, send_notification_headnursing
 from fcm_django.models import FCMDevice
-from users.permissions import IsNurse, IsHeadNursing
+from datetime import datetime
 
 
 # ====================== Doctor =======================================
@@ -167,10 +167,20 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
 
 class ImageUploadView(generics.ListCreateAPIView):
     serializer_class = ImageSerializer
-    queryset = Image.objects.all()
 
     def post(self, request):
         serializer = AddImageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"message": "Upload Successfully"}, status=status.HTTP_200_OK)
+
+    def get(self, request):
+        selected_date = request.query_params.get('selected_date', None)
+        if selected_date:
+            selected_date_obj = datetime.strptime(
+                selected_date, '%Y-%m-%d').date()
+            queryset = Image.objects.filter(created__date=selected_date_obj)
+        else:
+            queryset = Image.objects.all()
+        serializer = self.serializer_class(queryset, many=True).data
+        return Response({'results': len(serializer), "data": serializer}, status=status.HTTP_200_OK)
