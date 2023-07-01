@@ -60,7 +60,7 @@ class AllNotificationPatient(views.APIView):
 class NotificationHeadNursing(views.APIView):
     def get(self, request):
         notification = NotificationApp.objects.select_related(
-            'user_sender', 'patient').prefetch_related('user_receiver').all()
+            'user_sender', 'patient').prefetch_related('user_receiver').filter(status=False)
         serializer = NotificationHeadNursingSerializer(
             notification, many=True).data
         return Response({'result': notification.count(), "data": serializer}, status=status.HTTP_200_OK)
