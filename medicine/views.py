@@ -138,7 +138,7 @@ class AddMedicineAllNurses(views.APIView):
                 for device_token, nurse_id in nurse_devices.items():
                     send_notification(
                         patient, nurse_id, device_token, 'Medicines Added', self.request.user)
-            # serializer.save(doctor=doctor_added, nurse=nurses)
+            serializer.save(doctor=doctor_added, nurse=nurses)
             return Response(data={"message": "Medicine Added successfully"}, status=status.HTTP_201_CREATED)
         else:
             return serializer_error(serializer)

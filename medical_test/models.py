@@ -77,18 +77,18 @@ class PatientRaysImage(models.Model):
 
 
 class Image(models.Model):
-    images = ArrayField(models.CharField(
-        max_length=255), blank=True, null=True)
+    image = models.ImageField(blank=True, null=True)
     url = models.URLField(blank=True, null=True)
+    created = models.DateTimeField(auto_now_add=True, null=True)
 
     def __str__(self):
         return f"Image {self.id}"
 
     def save(self, *args, **kwargs):
-        if self.images:
-            urls = []
-            for image_data in self.images:
-                response = cloudinary.uploader.upload(image_data)
-                urls.append(response['url'])
-            self.url = urls
+        if self.image:
+            response = cloudinary.uploader.upload(self.image)
+            self.url = response['url']
         super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ('-created',)

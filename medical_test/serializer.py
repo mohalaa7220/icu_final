@@ -71,19 +71,12 @@ class PatientRaysImageSerializer(serializers.ModelSerializer):
 
 
 class AddImageSerializer(serializers.ModelSerializer):
-    images = serializers.ListField(child=serializers.ImageField())
-
     class Meta:
         model = Image
-        fields = ('images',)
+        fields = ('image',)
 
 
 class ImageSerializer(serializers.ModelSerializer):
-    images = serializers.SerializerMethodField(source='url')
-
     class Meta:
         model = Image
-        fields = ('id',  'images')
-
-    def get_images(self, instance):
-        return eval(instance.url) if instance.url else []
+        fields = ('id',  'url')

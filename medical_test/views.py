@@ -167,13 +167,9 @@ class AddPatientRaysImage(generics.ListCreateAPIView):
 
 class ImageUploadView(generics.ListCreateAPIView):
     serializer_class = ImageSerializer
-    queryset = Image.objects.all().order_by('-id')
+    queryset = Image.objects.all()
 
     def post(self, request):
-        images = request.data.get('images', [])
-        if not images:
-            return Response({"message": "at least add one image"}, status=status.HTTP_400_BAD_REQUEST)
-
         serializer = AddImageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()

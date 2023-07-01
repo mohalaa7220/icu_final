@@ -12,5 +12,5 @@ urlpatterns = [
     path('patient/<str:pk>/rays_image',
          AddPatientRaysImage.as_view(), name='AddPatientRaysImage'),
 
-    path('multi_images/', ImageUploadView.as_view(), name='image-create'),
+    path('monitor_images/', ImageUploadView.as_view(), name='image-create'),
 ]
