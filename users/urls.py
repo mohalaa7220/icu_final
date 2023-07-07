@@ -3,7 +3,7 @@ from .views import (SignUpAdminView, GetActiveAdminUser, SignUpUserView, Login, 
                     LogoutView, LoginUser, AddDeleteNurseUser, NurseDoctor, DoctorNurse, AllDoctors, AllNurses,
                     GetPendingAdminUser, DetailsAdminUser, AccepterAdminUser, UserDetails, SignupPatients, AllHeaderNUrsing,
                     Patients, PatientDetailsAPI, PatientDeleteUser, GetUsersPatient, GetRelatedUser, AllPatients, PatientDetails,
-                    PasswordResetView, VerifyOTP, PasswordView, DoctorsName, NursesName, PatientUser, PatientUserDetails, UpdateProfileAdmin
+                    PasswordResetView, VerifyOTP, PasswordView, DoctorsName, NursesName, PatientUser, PatientUserDetails, UpdateProfileAdmin, PatientMonitorView
                     )
 
 
@@ -86,4 +86,8 @@ urlpatterns = [
     # ----------------PatientAPI HeadNursing---------------
     path('all_patients/', AllPatients.as_view(), name='AllPatients'),
     path('all_patients/<str:pk>', PatientDetails.as_view(), name='PatientDetails'),
+
+
+    path('patient_monitor/<str:pk>',
+         PatientMonitorView.as_view(), name='PatientMonitor'),
 ]

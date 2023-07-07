@@ -174,3 +174,19 @@ class Patient(models.Model):
         self.gender = self.gender.lower()
         self.status = self.status.lower()
         super(Patient, self).save(*args, **kwargs)
+
+
+class PatientMonitor(models.Model):
+    patient = models.ForeignKey(
+        Patient, null=True, blank=True, on_delete=models.CASCADE)
+    ecg = models.CharField(max_length=220)
+    resp = models.CharField(max_length=220)
+    spo2 = models.CharField(max_length=220)
+    co2 = models.CharField(max_length=220)
+    ibp = models.CharField(max_length=220)
+    nibp = models.CharField(max_length=220)
+
+    created = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
+    class Meta:
+        ordering = ('-id',)

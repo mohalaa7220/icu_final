@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.validators import ValidationError
-from .models import (Admin, User, Doctor, Nurse, Patient)
+from .models import (Admin, User, Doctor, Nurse, Patient, PatientMonitor)
 from rest_framework.response import Response
 
 
@@ -341,3 +341,9 @@ class PasswordSerializer(serializers.Serializer):
         if email_exists == False:
             raise ValidationError({"message": "Email does not exist"})
         return super().validate(attrs)
+
+
+class PatientsMonitorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PatientMonitor
+        fields = '__all__'

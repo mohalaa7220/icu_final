@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import generics, status, views
 from fcm_django.models import FCMDevice
 from django.db.models import Q
@@ -15,8 +16,8 @@ from .permissions import IsAdminRole, IsNurse, IsDoctor, IsSuperUser
 from .serializer import (SignUpAdminSerializer, SignUpUserSerializer, AddNurseSerializer, UpdateUserSerializer, UpdatePatientProfileSerializer,
                          UserSerializer, SimpleUserSerializer, NurseSerializer, DoctorSerializer, UsersName,
                          AddPatient, PatientSerializer, PatientDoctorsSerializer, PatientNurseSerializer,
-                         ResetPasswordSerializer, VerifyOtpSerializer, PasswordSerializer, UpdateProfileSerializer)
-from .models import (Admin, Doctor, Nurse, User, Patient)
+                         ResetPasswordSerializer, VerifyOtpSerializer, PasswordSerializer, PatientsMonitorSerializer)
+from .models import (Admin, Doctor, Nurse, User, Patient, PatientMonitor)
 from rest_framework.authentication import SessionAuthentication
 from project.serializer_error import serializer_error
 from django.contrib.auth import get_user_model
@@ -686,3 +687,17 @@ class PatientDetails(views.APIView):
         serializer = PatientSerializer(
             queryset, context={'request': request}).data
         return Response(serializer, status=status.HTTP_200_OK)
+
+
+class PatientMonitorView(views.APIView):
+
+    def get(self, request, pk=None):
+        selected_date = request.query_params.get('selected_date', None)
+        if selected_date:
+            date_obj = datetime.strptime(selected_date, '%Y-%m-%d').date()
+            patient = PatientMonitor.objects.filter(
+                patient__id=pk, created__date=date_obj)
+        else:
+            patient = PatientMonitor.objects.filter(patient__id=pk)
+        serializer = PatientsMonitorSerializer(patient, many=True).data
+        return Response({'data': serializer}, status=status.HTTP_200_OK)

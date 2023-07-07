@@ -1,9 +1,8 @@
 from django.contrib import admin
-from .models import (User, Admin, Doctor, Nurse, Patient)
+from .models import (User, Admin, Doctor, Nurse, Patient, PatientMonitor)
+
 
 # =========== User ==============
-
-
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ['name', 'email', 'username', 'role', 'is_active']
@@ -105,3 +104,6 @@ class PatientAdmin(admin.ModelAdmin):
         if not request.user.is_admin:
             return {}
         return super(PatientAdmin, self).get_model_perms(request)
+
+
+admin.site.register(PatientMonitor)
