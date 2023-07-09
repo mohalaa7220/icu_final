@@ -271,10 +271,11 @@ class UsersPatientSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='user.name')
     phone = serializers.CharField(source='user.phone')
     email = serializers.CharField(source='user.email')
+    gender = serializers.CharField(source='user.gender')
 
     class Meta:
         model = Nurse
-        fields = ['id', 'name', 'phone', 'email']
+        fields = ['id', 'name', 'phone', 'email', 'gender']
 
 
 # Patient ---------
@@ -294,7 +295,7 @@ class PatientDoctorsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ['id', 'name', 'image', 'disease_type', 'room_number', 'address',
+        fields = ['id', 'name', 'image', 'disease_type', 'room_number', 'address', 'gender',
                   'phone',  'age', 'status', 'user']
 
 
@@ -310,7 +311,7 @@ class PatientNurseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Patient
-        fields = ['id', 'name', 'image', 'disease_type', 'room_number',
+        fields = ['id', 'name', 'image', 'disease_type', 'room_number', 'gender',
                   'phone',  'age', 'status', 'user']
 
 
