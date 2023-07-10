@@ -77,6 +77,7 @@ class NurseResultMedicineSerializer(serializers.ModelSerializer):
     doctor = serializers.StringRelatedField()
     patient = serializers.StringRelatedField()
     name = serializers.StringRelatedField()
+    time_clock = Time12hSerializerField()
 
     class Meta:
         model = Medicine
